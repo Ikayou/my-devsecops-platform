@@ -14,6 +14,23 @@ spec:
         grafana:
           service:
             type: NodePort
+
+          envValueFrom:
+            GF_SMTP_PASSWORD:
+              secretKeyRef:
+                name: grafana-smtp
+                key: GF_SMTP_PASSWORD
+
+          grafana.ini:
+            smtp:
+              enabled: true
+              host: smtp.gmail.com:587
+              user: ikari.com56@gmail.com
+              password: $__env{GF_SMTP_PASSWORD}
+              from_address: ikari.com56@gmail.com
+              from_name: Grafana
+              skip_verify: true
+              
   destination:
     server: "https://kubernetes.default.svc"
     namespace: monitoring
