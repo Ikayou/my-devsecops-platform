@@ -15,13 +15,8 @@ spec:
       values: |
         operator:
           prometheusMetricsEnabled: true
-
         service:
-          metricsPort: 80
-
-        serviceMonitor:
-          enabled: true
-          namespace: monitoring
+          metricsPort: 8080
   destination:
     server: https://kubernetes.default.svc
     namespace: trivy-system
