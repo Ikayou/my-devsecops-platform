@@ -17,6 +17,8 @@ spec:
       values: |
         operator:
           prometheusMetricsEnabled: true
+        service:
+          metricsPort: 8080
   destination:
     server: https://kubernetes.default.svc
     
