@@ -18,11 +18,12 @@ spec:
         operator:
           prometheusMetricsEnabled: true
         service:
+          
           additionalPorts:
-            - name: prometheus-metrics
+            - name: trivy-metrics 
               port: 8080
               protocol: TCP
-              targetPort: metrics
+              targetPort: 8080
   destination:
     server: https://kubernetes.default.svc
     
