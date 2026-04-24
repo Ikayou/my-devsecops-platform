@@ -16,6 +16,8 @@ spec:
           kind: modern_ebpf
         falcosidekick:
           enabled: true
+          metrics:
+            enabled: true
           webui:
             enabled: true
   destination:
