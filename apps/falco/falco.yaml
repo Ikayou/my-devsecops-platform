@@ -13,12 +13,14 @@ spec:
       values: |
         
         driver:
-          kind: ebpf
-        
+          kind: modern-ebpf
+        driver:
+          enabled: true
+          kind: modern-ebpf
         falcosidekick:
           enabled: true
           webui:
-            enabled: true 
+            enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: falco
