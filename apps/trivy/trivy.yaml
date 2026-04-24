@@ -18,10 +18,8 @@ spec:
         operator:
           prometheusMetricsEnabled: true
         service:
-          metricsEnabled: true
-          
           additionalPorts:
-            - name: metrics
+            - name: prometheus-metrics
               port: 8080
               protocol: TCP
               targetPort: metrics
