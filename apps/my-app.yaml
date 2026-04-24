@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: (あなたのレポジトリのURL)
+    repoURL: https://github.com/Ikayou/my-devsecops-platform.git
     targetRevision: HEAD
     path: apps/my-app  
   destination:
