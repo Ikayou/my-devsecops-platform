@@ -13,6 +13,10 @@ spec:
     repoURL: https://aquasecurity.github.io/helm-charts/
     targetRevision: 0.20.0  
     chart: trivy-operator
+    helm:
+      values: |
+        operator:
+          prometheusMetricsEnabled: true
   destination:
     server: https://kubernetes.default.svc
     
