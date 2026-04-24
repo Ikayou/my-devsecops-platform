@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: trivy
+  name: trivy-operator
   namespace: argocd
   
   finalizers:
@@ -12,7 +12,7 @@ spec:
     
     repoURL: https://aquasecurity.github.io/helm-charts/
     targetRevision: 0.20.0  
-    chart: trivy
+    chart: trivy-operator
   destination:
     server: https://kubernetes.default.svc
     
