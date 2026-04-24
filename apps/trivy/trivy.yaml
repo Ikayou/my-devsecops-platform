@@ -3,35 +3,31 @@ kind: Application
 metadata:
   name: trivy-operator
   namespace: argocd
-  
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    
     repoURL: https://aquasecurity.github.io/helm-charts/
-    targetRevision: 0.20.0  
+    targetRevision: 0.20.0
     chart: trivy-operator
     helm:
       values: |
         operator:
           prometheusMetricsEnabled: true
+
         service:
-          
-          additionalPorts:
-            - name: trivy-metrics 
-              port: 8080
-              protocol: TCP
-              targetPort: 8080
+          metricsPort: 80
+
+        serviceMonitor:
+          enabled: true
+          namespace: monitoring
   destination:
     server: https://kubernetes.default.svc
-    
     namespace: trivy-system
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      
       - CreateNamespace=true
