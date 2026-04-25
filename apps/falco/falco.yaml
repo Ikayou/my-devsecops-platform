@@ -13,7 +13,7 @@ spec:
       values: |
         driver:
           enabled: true
-          kind: modern-ebpf
+          kind: modern_ebpf
         mounts:
           hostRoot: true
         driverLoader:
