@@ -13,9 +13,10 @@ spec:
       values: |
         driver:
           enabled: true
-          kind: modern_ebpf
+          kind: ebpf # modern_ebpf(windows)
         falco:
           privileged: true
+          tty: true
           http_output:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
