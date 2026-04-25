@@ -21,6 +21,9 @@ spec:
           tag: "26"
 
         postgresql:
+          auth:
+            password: "password123" 
+            postgresPassword: "password123"
           image:
             registry: docker.io
             repository: bitnamilegacy/postgresql
