@@ -16,14 +16,14 @@ spec:
           adminPassword: "password123"
 
         image:
-          registry: docker.io
-          repository: bitnamilegacy/keycloak
-          tag: "25.0.0"
+          registry: quay.io
+          repository: bitnami/keycloak
+          tag: "26"
 
         postgresql:
           image:
-            registry: docker.io
-            repository: bitnamilegacy/postgresql
+            registry: quay.io
+            repository: bitnami/postgresql
             tag: "16"
 
         proxy: edge
