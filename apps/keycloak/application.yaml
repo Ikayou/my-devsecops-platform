@@ -15,7 +15,8 @@ spec:
           adminUser: admin
           adminPassword: "password123" 
         image:
-          tag: "25"
+          repository: bitnami/keycloak
+          tag: 24.0.3
         proxy: edge
         httpRelativePath: /
   destination:
