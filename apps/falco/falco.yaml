@@ -18,18 +18,20 @@ spec:
           hostRoot: true
         driverLoader:
           enabled: false
-      falco:
-        privileged: true
-        tty: true
-        http_output:
+        
+        falco:
+          privileged: true
+          tty: true
+          http_output:
+            enabled: true
+            
+            url: "http://falco-falcosidekick:2801/"
+        falcosidekick:
           enabled: true
-          url: "http://falcofalcosidekick:2801/"
-      falcosidekick:
-        enabled: true
-        metrics:
-          enabled: true
-        webui:
-          enabled: true
+          metrics:
+            enabled: true
+          webui:
+            enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: falco
