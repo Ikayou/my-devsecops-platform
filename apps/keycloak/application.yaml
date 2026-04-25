@@ -20,6 +20,12 @@ spec:
           repository: bitnamilegacy/keycloak
           tag: 24.0.3
 
+         postgresql:
+          image:
+            registry: docker.io
+            repository: bitnamilegacy/postgresql
+            tag: 16.3.0-debian-12-r23
+
         proxy: edge
         httpRelativePath: /
   destination:
