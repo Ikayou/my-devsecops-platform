@@ -15,6 +15,7 @@ spec:
           
           extraArgs:
           - --auth-mode=server
+          - --secure=false
   destination:
     server: https://kubernetes.default.svc
     namespace: argo
