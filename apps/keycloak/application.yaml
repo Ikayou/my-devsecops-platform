@@ -20,7 +20,7 @@ spec:
           repository: bitnamilegacy/keycloak
           tag: "26"
 
-         postgresql:
+        postgresql:
           image:
             registry: docker.io
             repository: bitnamilegacy/postgresql
