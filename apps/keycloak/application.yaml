@@ -13,10 +13,13 @@ spec:
       values: |
         auth:
           adminUser: admin
-          adminPassword: "password123" 
+          adminPassword: "password123"
+
         image:
-          repository: bitnami/keycloak
+          registry: docker.io
+          repository: bitnamilegacy/keycloak
           tag: 24.0.3
+
         proxy: edge
         httpRelativePath: /
   destination:
