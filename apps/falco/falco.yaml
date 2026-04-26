@@ -10,7 +10,6 @@ spec:
     chart: falco
     targetRevision: 4.0.0  
     helm:
-      helm:
       values: |
         driver:
           kind: modern_ebpf 
