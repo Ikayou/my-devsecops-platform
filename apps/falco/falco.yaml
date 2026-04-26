@@ -23,7 +23,8 @@ spec:
           can_mount_host_fs: true
           
           json_output: true
-          stdout_output: true
+          stdout_output:
+            enabled: true
 
           http_output:
             enabled: true
