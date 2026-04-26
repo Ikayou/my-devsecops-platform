@@ -22,8 +22,10 @@ spec:
                 Mem_Buf_Limit  5MB
           outputs: |
             [OUTPUT]
-                Name  stdout
-                Match *  
+                Name   loki
+                Match  *
+                Host   loki-gateway.monitoring.svc.cluster.local
+                Port   80  
   destination:
     server: https://kubernetes.default.svc
     namespace: logging # Logging namespace deployment
