@@ -13,6 +13,13 @@ spec:
     
       values: |
         config:
+          inputs: |
+            [INPUT]
+                Name           tail
+                Path           /var/log/containers/*.log
+                Exclude_Path   /var/log/containers/fluent-bit*.log
+                Tag            kube.*
+                Mem_Buf_Limit  5MB
           outputs: |
             [OUTPUT]
                 Name  stdout
