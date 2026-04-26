@@ -21,7 +21,7 @@ spec:
           privileged: true 
           tty: true
           can_mount_host_fs: true
-          
+          syscall_buf_size_preset: 2
           json_output: true
           stdout_output:
             enabled: true
@@ -29,6 +29,8 @@ spec:
           http_output:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
+        mounts:
+          hostRoot: true
 
         falcosidekick:
           enabled: true
