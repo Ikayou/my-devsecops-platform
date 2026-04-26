@@ -10,26 +10,28 @@ spec:
     chart: falco
     targetRevision: 4.0.0  
     helm:
+      helm:
       values: |
         driver:
+          kind: modern_ebpf 
+      
+        ebpf:
           enabled: true
-          kind: modern_ebpf
-        mounts:
-          hostRoot: true
-        driverLoader:
-          enabled: false
         
         falco:
-          privileged: true
+          privileged: true 
           tty: true
+          can_mount_host_fs: true
+          
+          json_output: true
+          stdout_output: true
+
           http_output:
             enabled: true
-            
             url: "http://falco-falcosidekick:2801/"
+
         falcosidekick:
           enabled: true
-          metrics:
-            enabled: true
           webui:
             enabled: true
   destination:
