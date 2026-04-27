@@ -1,0 +1,90 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: endpoint-ssl-monitor
+spec:
+  templates:
+  - name: check-endpoints
+    script:
+      image: python:3.9-slim
+      command: [python]
+      env:
+      - name: SLACK_WEBHOOK_URL
+        valueFrom:
+          secretKeyRef:
+            name: slack-creds
+            key: webhook-url
+      source: |
+        import subprocess
+        import sys
+        import os
+        import json
+        import time
+        import ssl
+        import socket
+        from datetime import datetime
+
+        # Initialisierung
+        print("Initialisierung der Umgebung...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
+        import requests
+
+        def get_ssl_expiry_days(hostname):
+            # Ueberpruefung der SSL-Zertifikatslaufzeit
+            context = ssl.create_default_context()
+            with socket.create_connection((hostname, 443)) as sock:
+                with context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                    cert = ssock.getpeercert()
+                    expiry_date_str = cert['notAfter']
+                    expiry_date = datetime.strptime(expiry_date_str, '%b %d %H:%M:%S %Y %Z')
+                    delta = expiry_date - datetime.utcnow()
+                    return delta.days
+
+        def send_slack_message(webhook_url, message):
+            requests.post(webhook_url, json={"text": message})
+
+        # Liste der zu ueberpruefenden Endpunkte (Hier Ihre URLs eintragen)
+        endpoints = [
+            "https://www.google.com",
+            "https://keycloak.example.com" # Dummy-URL als Platzhalter
+        ]
+
+        results = []
+        critical_alerts = []
+
+        for url in endpoints:
+            hostname = url.replace("https://", "").split("/")[0]
+            print(f"Pruefung von: {url}")
+            
+            try:
+                # 1. Erreichbarkeit und Antwortzeit
+                start_time = time.time()
+                response = requests.get(url, timeout=10)
+                duration = round((time.time() - start_time) * 1000, 2)
+                status_code = response.status_code
+                
+                # 2. SSL-Check
+                days_left = get_ssl_expiry_days(hostname)
+                
+                status_text = f"Status: {status_code}, Zeit: {duration}ms, SSL: noch {days_left} Tage"
+                results.append(f"URL: {url}\n{status_text}")
+
+                # Kriterien fuer kritische Warnungen
+                if status_code != 200 or days_left < 30:
+                    critical_alerts.append(f"Achtung: {url} ({status_text})")
+
+            except Exception as e:
+                error_msg = f"Fehler bei {url}: {str(e)}"
+                results.append(error_msg)
+                critical_alerts.append(error_msg)
+
+        # Zusammenfassung und Benachrichtigung
+        webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+        report_body = "\n---\n".join(results)
+        final_report = f"Externer Endpunkt-Bericht\n\n{report_body}"
+
+        if critical_alerts:
+            final_report = "DRINGEND: Probleme bei externen Endpunkten erkannt\n\n" + final_report
+        
+        send_slack_message(webhook_url, final_report)
+        print("Bericht an Slack gesendet.")
