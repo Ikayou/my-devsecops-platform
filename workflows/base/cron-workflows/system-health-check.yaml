@@ -1,0 +1,13 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: hourly-pod-check
+  namespace: argo
+spec:
+  schedule: "0 * * * *"  # Jede Stunde zur Minute 0
+  concurrencyPolicy: "Replace"
+  startingDeadlineSeconds: 600
+  workflowSpec:
+    serviceAccountName: workflow-runner # Berechtigungen für Pod-Überprüfung
+    workflowTemplateRef:
+      name: pod-health-guardian # templates/system-log-audit.yaml Name des WorkflowTemplates, das die Pod-Überprüfung durchführt
