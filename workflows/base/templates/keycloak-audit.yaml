@@ -26,19 +26,29 @@ spec:
           secretKeyRef:
             name: keycloak-creds
             key: password
+      - name: SLACK_WEBHOOK_URL
+        valueFrom:
+          secretKeyRef:
+            name: slack-creds
+            key: webhook-url
       source: |
         import subprocess
         import sys
         import os
+        import json
 
-        # Installation der benötigten Bibliothek python-keycloak
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "python-keycloak", "-q"])
+        # Benötigte Bibliotheken installieren
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "python-keycloak", "requests", "-q"])
 
         from keycloak import KeycloakAdmin
+        import requests
+
+        def send_slack_message(webhook_url, message):
+            payload = {"text": message}
+            requests.post(webhook_url, json=payload)
 
         try:
             print("--- Audit-Start ---")
-            # Initialisierung des Keycloak-Admin-Clients
             admin = KeycloakAdmin(
                 server_url="{{inputs.parameters.keycloak-url}}",
                 username=os.getenv("ADMIN_USER"),
@@ -47,31 +57,27 @@ spec:
                 verify=False
             )
 
-            # Abrufen aller Benutzer aus dem angegebenen Realm
             users = admin.get_users({})
-            print(f"--- Audit-Bericht wird erstellt ---")
-            
             unsafe_users = []
+            
             for user in users:
-                # Abrufen detaillierter Benutzerinformationen für die MFA-Prüfung
                 user_detail = admin.get_user(user['id'])
-                
-                # Prüfung, ob MFA (Multi-Faktor-Authentifizierung) aktiviert ist
                 has_otp = user_detail.get('totp', False)
                 creds_types = user_detail.get('disableableCredentialTypes', [])
                 has_mfa = has_otp or any('otp' in t.lower() for t in creds_types)
                 
-                status = " MFA aktiviert" if has_mfa else " MFA nicht konfiguriert"
-                print(f"Benutzer: {user['username']} - {status}")
-                
                 if not has_mfa:
                     unsafe_users.append(user['username'])
 
-            # Zusammenfassende Warnung, falls Benutzer ohne MFA gefunden wurden
+            # Slack-Benachrichtigung vorbereiten
+            webhook_url = os.getenv("SLACK_WEBHOOK_URL")
             if unsafe_users:
-                print(f"\n Warnung: Schwache Sicherheitseinstellungen (kein MFA): {', '.join(unsafe_users)}")
+                alert_text = f" *Sicherheitswarnung*\nFolgende Benutzer haben kein MFA aktiviert: {', '.join(unsafe_users)}"
+                send_slack_message(webhook_url, alert_text)
+                print(f"Warnung an Slack gesendet: {', '.join(unsafe_users)}")
             else:
-                print("\n Alle Benutzer haben MFA aktiviert.")
+                send_slack_message(webhook_url, " Audit abgeschlossen: Alle Benutzer haben MFA aktiviert.")
+                print("Erfolgsmeldung an Slack gesendet.")
 
         except Exception as e:
             print(f"Ein Fehler ist aufgetreten: {e}")
