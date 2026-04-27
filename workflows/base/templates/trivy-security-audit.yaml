@@ -22,18 +22,14 @@ spec:
 
         # Initialisierung der Umgebung
         print("Initialisierung der Umgebung...")
-        
-        # Installation von Python-Requests und curl
         subprocess.check_call(["apt-get", "update", "-y"])
         subprocess.check_call(["apt-get", "install", "-y", "curl"])
         subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
         
-        # Installation von Trivy ueber das offizielle Install-Skript
-        # Dieses Skript waehlt automatisch die passende Version fuer das System
-        print("Installation von Trivy via offiziellem Skript...")
+        # Installation von Trivy via offiziellem Skript
+        print("Installation von Trivy...")
         subprocess.check_call(["sh", "-c", "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"])
 
-        # Import der Requests-Bibliothek
         import requests
 
         def send_slack_message(webhook_url, message):
@@ -41,12 +37,10 @@ spec:
             requests.post(webhook_url, json=payload)
 
         try:
-            # Zu scannendes Image
             target_image = "quay.io/keycloak/keycloak:latest"
-            print(f"Start des Scans fuer Image: {target_image}")
+            print(f"Start des detaillierten Scans fuer: {target_image}")
             
-            # Ausfuehrung von Trivy-Scan (HIGH und CRITICAL)
-            # Hinweis: Der erste Scan kann aufgrund des DB-Downloads 1-2 Minuten dauern
+            # Ausfuehrung des Scans
             cmd = ["/usr/local/bin/trivy", "image", "--severity", "HIGH,CRITICAL", "--format", "json", target_image]
             result = subprocess.run(cmd, capture_output=True, text=True)
             
@@ -55,30 +49,49 @@ spec:
                 sys.exit(1)
 
             report = json.loads(result.stdout)
-            vulns_found = []
+            detailed_vulns = []
             
-            # Analyse der Ergebnisse
+            # Analyse aller Ergebnisse und Extraktion detaillierter Informationen
             if "Results" in report:
                 for res in report["Results"]:
                     if "Vulnerabilities" in res:
                         for v in res["Vulnerabilities"]:
-                            vulns_found.append(f"ID: {v['VulnerabilityID']} ({v['Severity']}) - {v['PkgName']}")
+                            # Erstellung eines detaillierten Textblocks pro Schwachstelle
+                            v_id = v.get('VulnerabilityID', 'N/A')
+                            severity = v.get('Severity', 'N/A')
+                            pkg = v.get('PkgName', 'N/A')
+                            installed = v.get('InstalledVersion', 'N/A')
+                            fixed = v.get('FixedVersion', 'Diskussion erforderlich')
+                            title = v.get('Title', 'Keine Beschreibung verfuegbar')
+                            
+                            info = (
+                                f"*ID:* {v_id} ({severity})\n"
+                                f"*Paket:* {pkg} (Installiert: {installed})\n"
+                                f"*Fix-Version:* {fixed}\n"
+                                f"*Titel:* {title}\n"
+                                f"---"
+                            )
+                            detailed_vulns.append(info)
 
             webhook_url = os.getenv("SLACK_WEBHOOK_URL")
-            if vulns_found:
-                count = len(vulns_found)
-                details = "\n".join(vulns_found[:5])
+            if detailed_vulns:
+                count = len(detailed_vulns)
+                # Zusammenfügen aller Funde zu einem langen Text
+                full_report = "\n".join(detailed_vulns)
                 alert_msg = (
-                    f"Trivy Sicherheitswarnung\n"
+                    f"Detaillierter Trivy Sicherheitsbericht\n"
                     f"Image: {target_image}\n"
-                    f"{count} kritische Schwachstellen gefunden.\n\n"
-                    f"Top 5 Funde:\n{details}"
+                    f"Anzahl der kritischen Funde: {count}\n\n"
+                    f"{full_report}"
                 )
+                
+                # Bei sehr vielen Funden koennte die Nachricht die Slack-Grenze ueberschreiten.
+                # Hier senden wir den kompletten Bericht.
                 send_slack_message(webhook_url, alert_msg)
-                print(f"Warnung gesendet: {count} Schwachstellen identifiziert.")
+                print(f"Detaillierter Bericht mit {count} Funden an Slack gesendet.")
             else:
                 send_slack_message(webhook_url, f"Trivy Audit abgeschlossen: Keine kritischen Schwachstellen in {target_image} gefunden.")
                 print("Keine kritischen Schwachstellen gefunden.")
 
         except Exception as e:
-            print(f"Ein Fehler ist waehrend des Scans aufgetreten: {e}")
+            print(f"Fehler: {e}")
