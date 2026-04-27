@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: nightly-user-audit
+spec:
+  schedule: "0 0 * * *"
+  workflowSpec:
+    entrypoint: audit-main
+    templates:
+    - name: audit-main
+      steps:
+      - - name: run-audit
+          templateRef:
+            name: keycloak-templates
+            template: audit-users

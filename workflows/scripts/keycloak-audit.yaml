@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: keycloak-audit-templates
+spec:
+  templates:
+  - name: user-scan
+    inputs:
+      parameters:
+      - name: keycloak-url
+      - name: realm
+    
+    script:
+      image: python:3.9-slim
+      command: [sh, -c] # pip benutzt sh, damit die Umgebungsvariablen aus dem Secret korrekt übergeben werden können
+      source: |
+        pip install python-keycloak > /dev/null 2>&1
+        python <<EOF
+        from keycloak import KeycloakAdmin
+        import os
+
+        # Secret-Umgebungsvariablen für Keycloak-Admin-Zugang
+        admin = KeycloakAdmin(
+            server_url="{{inputs.parameters.keycloak-url}}",
+            username=os.getenv("ADMIN_USER"),
+            password=os.getenv("ADMIN_PASS"),
+            realm_name="{{inputs.parameters.realm}}",
+            verify=True
+        )
+
+        users = admin.get_users({})
+        for user in users:
+            # Hier können weitere Prüfungen oder Aktionen mit den Benutzerdaten durchgeführt werden
+            print(f"Checking user: {user['username']}")
+        EOF
