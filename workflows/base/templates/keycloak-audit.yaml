@@ -14,8 +14,7 @@ spec:
         value: "master"
     script:
       image: python:3.9-slim
-      command: [sh, -c]
-      # --- wichtig: von Secret  ---
+      command: [python]
       env:
       - name: ADMIN_USER
         valueFrom:
@@ -27,13 +26,18 @@ spec:
           secretKeyRef:
             name: keycloak-creds
             key: password
-      # ------------------------------------------
       source: |
-        pip install python-keycloak -q
+        import subprocess
+        import sys
         import os
+
+        # python-keycloak installieren
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "python-keycloak", "-q"])
+
         from keycloak import KeycloakAdmin
 
         try:
+            print("--- Audit Start ---")
             admin = KeycloakAdmin(
                 server_url="{{inputs.parameters.keycloak-url}}",
                 username=os.getenv("ADMIN_USER"),
@@ -43,11 +47,9 @@ spec:
             )
 
             users = admin.get_users({})
-            print(f"--- Audit Start: {len(users)} users to check ---")
-
+            print(f"Total {len(users)} users checked.")
             for user in users:
-                # Display user names
-                print(f"Audit Target User: {user['username']}")
+                print(f"User: {user['username']}")
 
         except Exception as e:
             print(f"Error occurred: {e}")
