@@ -22,13 +22,23 @@ spec:
 
         # Initialisierung der Umgebung: Installation notwendiger Bibliotheken und Trivy
         print("Initialisierung der Umgebung...")
+        
+        # Installation von grundlegenden Werkzeugen fuer die Repository-Verwaltung
+        subprocess.check_call(["apt-get", "update", "-y"])
+        subprocess.check_call(["apt-get", "install", "-y", "wget", "gnupg", "lsb-release", "curl"])
+        
+        # Installation von Python-Requests
         subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
         
-        # Installation von Trivy (Debian/Ubuntu-basiert)
-        subprocess.check_call(["apt-get", "update", "-y"])
-        subprocess.check_call(["apt-get", "install", "wget", "gnupg", "lsb-release", "-y"])
-        subprocess.check_call(["sh", "-c", "wget -qO - https://aquasecurity.github.io/trivy-repo/dabest.gpg | apt-key add -"])
-        subprocess.check_call(["sh", "-c", "echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | tee -a /etc/apt/sources.list.d/trivy.list"])
+        # Installation von Trivy ueber den offiziellen Weg
+        print("Installation von Trivy...")
+        # Erstellen des Verzeichnisses fuer Schluessel, falls nicht vorhanden
+        subprocess.check_call(["mkdir", "-p", "/usr/share/keyrings"])
+        # Herunterladen und Speichern des GPG-Schluessels
+        subprocess.check_call(["sh", "-c", "curl -sfL https://aquasecurity.github.io/trivy-repo/dabest.gpg | gpg --dearmor -o /usr/share/keyrings/trivy.gpg"])
+        # Hinzufuegen der Repository-Quelle
+        subprocess.check_call(["sh", "-c", "echo 'deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main' | tee /etc/apt/sources.list.d/trivy.list"])
+        
         subprocess.check_call(["apt-get", "update", "-y"])
         subprocess.check_call(["apt-get", "install", "trivy", "-y"])
 
@@ -64,7 +74,6 @@ spec:
             webhook_url = os.getenv("SLACK_WEBHOOK_URL")
             if vulns_found:
                 count = len(vulns_found)
-                # Zusammenfassung der ersten 5 Funde fuer den Slack-Bericht
                 details = "\n".join(vulns_found[:5])
                 alert_msg = (
                     f"Trivy Sicherheitswarnung\n"
