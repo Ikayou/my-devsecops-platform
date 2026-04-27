@@ -47,9 +47,25 @@ spec:
             )
 
             users = admin.get_users({})
-            print(f"Total {len(users)} users checked.")
+            print(f"--- Audit Report Start ---")
+            
+            unsafe_users = []
             for user in users:
-                print(f"User: {user['username']}")
+                # user check if user uses MFA
+              
+                creds = admin.get_user_credentials(user['id'])
+                has_mfa = any(c['type'] in ['otp', 'webauthn'] for c in creds)
+                
+                status = " MFA Enabled" if has_mfa else " MFA Not Configured"
+                print(f"User: {user['username']} - {status}")
+                
+                if not has_mfa:
+                    unsafe_users.append(user['username'])
+
+            if unsafe_users:
+                print(f"\n Warning: The following users have weak security settings: {', '.join(unsafe_users)}")
+            else:
+                print("\n All users have good security settings.")
 
         except Exception as e:
             print(f"Error occurred: {e}")
