@@ -51,10 +51,11 @@ spec:
             
             unsafe_users = []
             for user in users:
-                # user check if user uses MFA
-              
-                creds = admin.get_user_credentials(user['id'])
-                has_mfa = any(c['type'] in ['otp', 'webauthn'] for c in creds)
+                
+                user_detail = admin.get_user(user['id'])
+                
+                creds_types = user_detail.get('disableableCredentialTypes', [])
+                has_mfa = any('otp' in t.lower() or 'webauthn' in t.lower() for t in creds_types)
                 
                 status = " MFA Enabled" if has_mfa else " MFA Not Configured"
                 print(f"User: {user['username']} - {status}")
