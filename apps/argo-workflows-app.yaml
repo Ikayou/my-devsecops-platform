@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/Ikayou/my-devsecops-platform.git
     targetRevision: HEAD
-    path: workflows/base/templates  
+    path: workflows/base
   destination:
     server: https://kubernetes.default.svc
     namespace: argo  
