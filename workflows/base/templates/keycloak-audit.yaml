@@ -9,7 +9,7 @@ spec:
     inputs:
       parameters:
       - name: keycloak-url
-        value: "http://keycloak.apps.svc.cluster.local:8080" 
+        value: "http://keycloak.keycloak.svc.cluster.local:80" 
       - name: realm
         value: "master"
     script:
