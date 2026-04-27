@@ -1,0 +1,13 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: daily-trivy-security-scan
+  namespace: argo
+spec:
+  schedule: "0 2 * * *"  # Taeglich um 02:00 UTC
+  concurrencyPolicy: "Replace"
+  startingDeadlineSeconds: 600
+  workflowSpec:
+    serviceAccountName: workflow-runner
+    workflowTemplateRef:
+      name: trivy-security-scanner

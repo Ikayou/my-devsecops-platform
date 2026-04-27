@@ -41,14 +41,17 @@ Durch den Einsatz von Argo Workflows wurden automatisierte Prozesse für den sic
   Regelmäßige Überprüfung der Benutzerkonten über die Keycloak-API. Identifiziert Konten ohne Multi-Faktor-Authentifizierung (MFA) und gibt die Ergebnisse in deutscher Sprache aus.
 - **Cluster Health Guardian**:
   Ein automatisierter Prozess scannt alle Namespaces auf fehlerhafte Pod-Zustände (z. B. CrashLoopBackOff). Dies nutzt die native Kubernetes-API und eine dedizierte RBAC-Konfiguration.
+- **Detailliertes Schwachstellen-Management (Trivy-Audit)**:
+  Automatisierter Scan von Container-Images auf kritische Sicherheitslücken (HIGH/CRITICAL). Der Audit identifiziert betroffene Pakete, installierte Versionen sowie verfügbare Fix-Versionen zur sofortigen Risikobewertung.
 - **Echtzeit-Benachrichtigung via Slack**:
-  Kritische Audit-Ergebnisse und Systemfehler werden sofort über Slack-Webhooks gemeldet. Die Integration erfolgt sicher über Kubernetes Secrets.
+  Kritische Audit-Ergebnisse, detaillierte Sicherheitsberichte und Systemfehler werden sofort über Slack-Webhooks gemeldet. Die Integration erfolgt sicher über Kubernetes Secrets.
 
 ---
 
 ## Automatisierung & Zeitsteuerung (CronWorkflows)
 Die operationalen Tasks sind als CronWorkflows konfiguriert:
 - **Keycloak Security Audit**: Täglich um 00:00 UTC.
+- **Trivy Vulnerability Scan**: Täglich um 02:00 UTC (oder nach Bedarf).
 - **Pod Health Check**: Stündlich zur Minute 0.
 
 ---
@@ -60,6 +63,7 @@ Durch dieses Projekt wurden vertiefte Kenntnisse in folgenden Bereichen erworben
 - Implementierung von GitOps-Workflows mit Argo CD.
 - Automatisierung von Betriebsabläufen (Day 2 Operations) mit Argo Workflows.
 - Sicherheit durch API-basiertes Auditing und IAM-Prüfungen.
+- Schwachstellen-Analyse und proaktives Patch-Management in Container-Umgebungen.
 - Konfiguration von RBAC (ClusterRole, ServiceAccount) für automatisierte Tools.
 - Integration von Drittanbieter-Tools (Slack) in automatisierte Pipelines.
 
