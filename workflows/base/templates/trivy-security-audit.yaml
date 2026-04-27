@@ -19,48 +19,64 @@ spec:
         import sys
         import os
         import json
-        import requests
 
-        # Trivy & Requests Bibliotheken installieren
-        print("Installing Trivy and dependencies...")
+        # Initialisierung der Umgebung: Installation notwendiger Bibliotheken und Trivy
+        print("Initialisierung der Umgebung...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
+        
+        # Installation von Trivy (Debian/Ubuntu-basiert)
         subprocess.check_call(["apt-get", "update", "-y"])
         subprocess.check_call(["apt-get", "install", "wget", "gnupg", "lsb-release", "-y"])
-        # Trivy GPG-Schlüssel und Repository hinzufügen
         subprocess.check_call(["sh", "-c", "wget -qO - https://aquasecurity.github.io/trivy-repo/dabest.gpg | apt-key add -"])
         subprocess.check_call(["sh", "-c", "echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | tee -a /etc/apt/sources.list.d/trivy.list"])
         subprocess.check_call(["apt-get", "update", "-y"])
         subprocess.check_call(["apt-get", "install", "trivy", "-y"])
 
-        def send_slack(message):
-            webhook_url = os.getenv("SLACK_WEBHOOK_URL")
-            requests.post(webhook_url, json={"text": message})
+        # Import der Requests-Bibliothek nach erfolgreicher Installation
+        import requests
+
+        def send_slack_message(webhook_url, message):
+            payload = {"text": message}
+            requests.post(webhook_url, json=payload)
 
         try:
             target_image = "quay.io/keycloak/keycloak:latest"
-            print(f"--- Scanning Image: {target_image} ---")
+            print(f"Start des Scans fuer Image: {target_image}")
             
-            # HIGH & CRITICAL Schwachstellen scannen
+            # Ausfuehrung von Trivy-Scan (Filter: HIGH und CRITICAL Schwachstellen im JSON-Format)
             cmd = ["trivy", "image", "--severity", "HIGH,CRITICAL", "--format", "json", target_image]
             result = subprocess.run(cmd, capture_output=True, text=True)
             
+            if result.returncode != 0:
+                print(f"Trivy-Fehler: {result.stderr}")
+                sys.exit(1)
+
             report = json.loads(result.stdout)
             vulns_found = []
             
+            # Analyse der Ergebnisse und Extraktion relevanter Schwachstellen
             if "Results" in report:
                 for res in report["Results"]:
                     if "Vulnerabilities" in res:
                         for v in res["Vulnerabilities"]:
                             vulns_found.append(f"ID: {v['VulnerabilityID']} ({v['Severity']}) - {v['PkgName']}")
 
+            webhook_url = os.getenv("SLACK_WEBHOOK_URL")
             if vulns_found:
                 count = len(vulns_found)
-                # Nur die ersten 5 Schwachstellen in der Nachricht anzeigen
+                # Zusammenfassung der ersten 5 Funde fuer den Slack-Bericht
                 details = "\n".join(vulns_found[:5])
-                msg = f" *Trivy Security Alert*\nImage: `{target_image}`\n{count} kritische Schwachstellen gefunden.\n\n*Top 5:* \n{details}"
-                send_slack(msg)
-                print(f"Alarm gesendet: {count} Schwachstellen gefunden.")
+                alert_msg = (
+                    f"Trivy Sicherheitswarnung\n"
+                    f"Image: {target_image}\n"
+                    f"{count} kritische Schwachstellen gefunden.\n\n"
+                    f"Top 5 Funde:\n{details}"
+                )
+                send_slack_message(webhook_url, alert_msg)
+                print(f"Warnung gesendet: {count} Schwachstellen identifiziert.")
             else:
-                print("Keine kritischen Schwachstellen gefunden. Keine Aktion erforderlich.")
+                send_slack_message(webhook_url, f"Trivy Audit abgeschlossen: Keine kritischen Schwachstellen in {target_image} gefunden.")
+                print("Keine kritischen Schwachstellen gefunden.")
 
         except Exception as e:
-            print(f"Fehler beim Scan: {e}")
+            print(f"Ein Fehler ist waehrend des Scans aufgetreten: {e}")
