@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: pod-health-guardian
+spec:
+  serviceAccountName: workflow-runner
+  templates:
+  - name: check-pods
+    script:
+      image: python:3.9-slim
+      command: [python]
+      env:
+      - name: SLACK_WEBHOOK_URL
+        valueFrom:
+          secretKeyRef:
+            name: slack-creds
+            key: webhook-url
+      source: |
+        import subprocess
+        import sys
+        import os
+        import json
+
+        # Kubernetes und Requests Bibliotheken installieren
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "kubernetes", "requests", "-q"])
+
+        from kubernetes import client, config
+        import requests
+
+        def send_slack(message):
+            webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+            requests.post(webhook_url, json={"text": message})
+
+        try:
+            config.load_incluster_config()
+            v1 = client.CoreV1Api()
+            
+            print("--- Pod-Status-Check gestartet ---")
+            pods = v1.list_pod_for_all_namespaces(watch=False)
+            unhealthy_pods = []
+
+            for pod in pods.items:
+                # Pending, Failed, Unknown pods als potenziell problematisch betrachten
+                if pod.status.phase not in ["Running", "Succeeded"]:
+                    unhealthy_pods.append(f"[{pod.metadata.namespace}] {pod.metadata.name} ({pod.status.phase})")
+
+            if unhealthy_pods:
+                msg = " *Pod-Anomalie erkannt*\n" + "\n".join(unhealthy_pods)
+                send_slack(msg)
+                print(f"Warnung gesendet: {len(unhealthy_pods)} Pods")
+            else:
+                print("Alle Pods sind gesund. Keine Aktion erforderlich.")
+
+        except Exception as e:
+            print(f"Fehler: {e}")
