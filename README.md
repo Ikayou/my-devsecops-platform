@@ -1,6 +1,6 @@
 # My DevSecOps Platform
 
-## 📌 Übersicht
+## Übersicht
 Dieses Projekt zeigt den Aufbau einer lokalen DevSecOps-Plattform auf Basis von Kubernetes.  
 Ziel ist es, typische DevOps- und Security-Tools in einer Umgebung zu integrieren und praktisch anzuwenden.
 
@@ -8,7 +8,7 @@ DevSecOps bedeutet, Sicherheit direkt in den Entwicklungs- und Deployment-Prozes
 
 ---
 
-## 🏗️ Architektur
+## Architektur
 Die Plattform basiert auf einer Kubernetes-Umgebung und integriert mehrere Tools aus den Bereichen Deployment, Monitoring und Security:
 
 - Kubernetes (lokales Cluster)
@@ -25,24 +25,24 @@ Zusätzlich wurden erste Erfahrungen mit folgenden Technologien gesammelt:
 
 ---
 
-## ⚙️ Funktionen
+## Funktionen
 
-### 🚀 GitOps Deployment
+### GitOps Deployment
 - Anwendungen werden über Argo CD automatisch aus Git-Repositories deployt  
 - Änderungen im Repository werden direkt im Cluster synchronisiert  
 
-### 📊 Monitoring & Observability
+### Monitoring & Observability
 - Prometheus sammelt Metriken aus dem Cluster  
 - Grafana visualisiert die Daten in Dashboards  
 - Alerts können definiert und getestet werden  
 
-### 🔐 Security Integration
+### Security Integration
 - Falco überwacht das Laufzeitverhalten von Containern  
 - Trivy scannt Container-Images auf Schwachstellen  
 
 ---
 
-## 🧪 Lernziele
+## Lernziele
 Dieses Projekt wurde erstellt, um praktische Erfahrungen in folgenden Bereichen zu sammeln:
 
 - Kubernetes Deployment und Troubleshooting  
@@ -53,7 +53,7 @@ Dieses Projekt wurde erstellt, um praktische Erfahrungen in folgenden Bereichen 
 
 ---
 
-## ▶️ Setup (Kurzbeschreibung)
+## ▶Setup (Kurzbeschreibung)
 
 ### Voraussetzungen
 - Docker
