@@ -1,15 +1,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
-  name: nightly-user-audit
+  name: keycloak-daily-audit
+  namespace: argo
 spec:
-  schedule: "0 0 * * *"
+  schedule: "0 0 * * *"  # Jeden Tag um Mitternacht (UTC)
+  timezone: "Europe/Berlin" # Zeitzone anpassen, falls nötig
+  concurrencyPolicy: "Replace"
+  startingDeadlineSeconds: 600
   workflowSpec:
-    entrypoint: audit-main
-    templates:
-    - name: audit-main
-      steps:
-      - - name: run-audit
-          templateRef:
-            name: keycloak-templates
-            template: audit-users
+    workflowTemplateRef:
+      name: keycloak-audit-templates # Bereits erstelltes Template aufrufen
