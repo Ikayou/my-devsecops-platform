@@ -9,28 +9,45 @@ spec:
     inputs:
       parameters:
       - name: keycloak-url
+        value: "http://keycloak.apps.svc.cluster.local:8080" 
       - name: realm
-    
+        value: "master"
     script:
       image: python:3.9-slim
-      command: [sh, -c] # pip benutzt sh, damit die Umgebungsvariablen aus dem Secret korrekt übergeben werden können
+      command: [sh, -c]
+      # --- wichtig: von Secret  ---
+      env:
+      - name: ADMIN_USER
+        valueFrom:
+          secretKeyRef:
+            name: keycloak-creds
+            key: username
+      - name: ADMIN_PASS
+        valueFrom:
+          secretKeyRef:
+            name: keycloak-creds
+            key: password
+      # ------------------------------------------
       source: |
-        pip install python-keycloak > /dev/null 2>&1
-        python <<EOF
-        from keycloak import KeycloakAdmin
+        pip install python-keycloak -q
         import os
+        from keycloak import KeycloakAdmin
 
-        # Secret-Umgebungsvariablen für Keycloak-Admin-Zugang
-        admin = KeycloakAdmin(
-            server_url="{{inputs.parameters.keycloak-url}}",
-            username=os.getenv("ADMIN_USER"),
-            password=os.getenv("ADMIN_PASS"),
-            realm_name="{{inputs.parameters.realm}}",
-            verify=True
-        )
+        try:
+            admin = KeycloakAdmin(
+                server_url="{{inputs.parameters.keycloak-url}}",
+                username=os.getenv("ADMIN_USER"),
+                password=os.getenv("ADMIN_PASS"),
+                realm_name="{{inputs.parameters.realm}}",
+                verify=False
+            )
 
-        users = admin.get_users({})
-        for user in users:
-            # Hier können weitere Prüfungen oder Aktionen mit den Benutzerdaten durchgeführt werden
-            print(f"Checking user: {user['username']}")
-        EOF
+            users = admin.get_users({})
+            print(f"--- Audit Start: {len(users)} users to check ---")
+
+            for user in users:
+                # Display user names
+                print(f"Audit Target User: {user['username']}")
+
+        except Exception as e:
+            print(f"Error occurred: {e}")
