@@ -3,6 +3,7 @@ kind: WorkflowTemplate
 metadata:
   name: keycloak-audit-templates
 spec:
+  entrypoint: user-scan
   templates:
   - name: user-scan
     inputs:
