@@ -43,15 +43,18 @@ Durch den Einsatz von Argo Workflows wurden automatisierte Prozesse für den sic
   Ein automatisierter Prozess scannt alle Namespaces auf fehlerhafte Pod-Zustände (z. B. CrashLoopBackOff). Dies nutzt die native Kubernetes-API und eine dedizierte RBAC-Konfiguration.
 - **Detailliertes Schwachstellen-Management (Trivy-Audit)**:
   Automatisierter Scan von Container-Images auf kritische Sicherheitslücken (HIGH/CRITICAL). Der Audit identifiziert betroffene Pakete, installierte Versionen sowie verfügbare Fix-Versionen zur sofortigen Risikobewertung.
+- **Externes Endpunkt-Monitoring (Synthetic Monitoring)**:
+  Überwachung der Erreichbarkeit und Antwortzeiten von externen URLs. Beinhaltet eine automatisierte Prüfung der SSL-Zertifikatslaufzeiten mit Alarmierung bei kritischen Restlaufzeiten (weniger als 30 Tage).
 - **Echtzeit-Benachrichtigung via Slack**:
-  Kritische Audit-Ergebnisse, detaillierte Sicherheitsberichte und Systemfehler werden sofort über Slack-Webhooks gemeldet. Die Integration erfolgt sicher über Kubernetes Secrets.
+  Kritische Audit-Ergebnisse, detaillierte Sicherheitsberichte, SSL-Warnungen und Systemfehler werden sofort über Slack-Webhooks gemeldet. Die Integration erfolgt sicher über Kubernetes Secrets.
 
 ---
 
 ## Automatisierung & Zeitsteuerung (CronWorkflows)
 Die operationalen Tasks sind als CronWorkflows konfiguriert:
 - **Keycloak Security Audit**: Täglich um 00:00 UTC.
-- **Trivy Vulnerability Scan**: Täglich um 02:00 UTC (oder nach Bedarf).
+- **Trivy Vulnerability Scan**: Täglich um 02:00 UTC.
+- **Externer Endpunkt- & SSL-Check**: Täglich um 04:00 UTC (oder bedarfsgerecht).
 - **Pod Health Check**: Stündlich zur Minute 0.
 
 ---
@@ -64,6 +67,7 @@ Durch dieses Projekt wurden vertiefte Kenntnisse in folgenden Bereichen erworben
 - Automatisierung von Betriebsabläufen (Day 2 Operations) mit Argo Workflows.
 - Sicherheit durch API-basiertes Auditing und IAM-Prüfungen.
 - Schwachstellen-Analyse und proaktives Patch-Management in Container-Umgebungen.
+- Externes Monitoring von Endpunkten und Überwachung der Public Key Infrastructure (SSL-Zertifikate).
 - Konfiguration von RBAC (ClusterRole, ServiceAccount) für automatisierte Tools.
 - Integration von Drittanbieter-Tools (Slack) in automatisierte Pipelines.
 
