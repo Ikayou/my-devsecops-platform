@@ -66,7 +66,7 @@ spec:
         from requests.auth import HTTPBasicAuth
 
         def send_slack_message(text):
-            slack_url = os.getenv("SLACK_URL")
+            slack_url = os.getenv("SLACK_WEBHOOK_URL")
             if not slack_url:
                 return
             payload = {"text": text}
@@ -78,29 +78,42 @@ spec:
             token = os.getenv("JIRA_TOKEN")
             project_key = os.getenv("JIRA_PROJECT")
             
-            cve_id = v.get('VulnerabilityID')
-            pkg = v.get('PkgName')
+            cve_id = v.get('VulnerabilityID', 'Unknown')
+            pkg = v.get('PkgName', 'Unknown')
+            title = v.get('Title', 'Keine Beschreibung verfügbar')
+            description = v.get('Description', 'Keine Details verfügbar')
+            primary_url = v.get('PrimaryURL', '')
             
             endpoint = f"{jira_url}/rest/api/3/issue"
             auth = HTTPBasicAuth(user, token)
             
-            desc = f"Trivy Scan Fund: {pkg}\nSchweregrad: {v.get('Severity')}\nFix: {v.get('FixedVersion', 'N/A')}"
+            # Detaillierte Beschreibung für Jira-Issue erstellen
+            full_description = (
+                f"*Paket:* {pkg}\n"
+                f"*Schweregrad:* {v.get('Severity')}\n"
+                f"*Installierte Version:* {v.get('InstalledVersion')}\n"
+                f"*Fix verfügbar in:* {v.get('FixedVersion', 'N/A')}\n\n"
+                f"*Zusammenfassung:*\n{title}\n\n"
+                f"*Details:*\n{description}\n\n"
+                f"*Link:* {primary_url}"
+            )
+            
             payload = {
                 "fields": {
                     "project": {"key": project_key},
-                    "summary": f"Sicherheit: {cve_id} in {pkg} gefunden",
+                    "summary": f"Sicherheit: {cve_id} in {pkg}",
                     "description": {
                         "type": "doc", "version": 1,
-                        "content": [{"type": "paragraph", "content": [{"type": "text", "text": desc}]}]
+                        "content": [{"type": "paragraph", "content": [{"type": "text", "text": full_description}]}]
                     },
-                    "issuetype": {"name": "Task"} # Bug oder Task je nach Bedarf anpassen
+                    "issuetype": {"name": "Task"}
                 }
             }
             
             res = requests.post(endpoint, json=payload, auth=auth)
             if res.status_code == 201:
                 print(f"Erfolg: Ticket für {cve_id} erstellt.")
-                send_slack_message(f" Jira Ticket erstellt: {cve_id} in {pkg} (Projekt: {project_key})")
+                send_slack_message(cve_id, pkg, v.get('Severity'))
             else:
                 print(f"Jira Fehler ({res.status_code}): {res.text}")
 
@@ -114,8 +127,9 @@ spec:
             if "Results" in report:
                 for r in report["Results"]:
                     if "Vulnerabilities" in r:
-                        print(f"{len(r['Vulnerabilities'])} Schwachstellen gefunden.")
-                        for v in r["Vulnerabilities"][:10]:  # Nur die Top 10 anzeigen
+                        vulns = r["Vulnerabilities"]
+                        print(f"{len(vulns)} Schwachstellen werden verarbeitet...")
+                        for v in vulns: # Schwachstellen einzeln behandeln
                             create_jira_issue(v)
         except Exception as e:
             print(f"Unerwarteter Fehler: {e}")
