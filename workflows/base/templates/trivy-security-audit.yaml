@@ -39,15 +39,35 @@ spec:
         import sys
         import os
         import json
+        import urllib.request
+        import tarfile
 
-        # 1. Installation von Trivy und requests
         print("--- Vorbereitung beginnt ---")
+        
+        # 1. Trivy manuell mit Python herunterladen und installieren
+        def install_trivy():
+            trivy_path = "/usr/local/bin/trivy"
+            if not os.path.exists(trivy_path):
+                print("Trivy nicht gefunden. Installation läuft...")
+                # Download URL für ARM64 (Ihre Umgebung laut Log)
+                url = "https://github.com/aquasecurity/trivy/releases/download/v0.70.0/trivy_0.70.0_Linux-ARM64.tar.gz"
+                tar_path = "/tmp/trivy.tar.gz"
+                
+                # Herunterladen
+                urllib.request.urlretrieve(url, tar_path)
+                
+                # Entpacken
+                with tarfile.open(tar_path, "r:gz") as tar:
+                    tar.extract("trivy", path="/usr/local/bin")
+                
+                # Ausführbar machen
+                os.chmod(trivy_path, 0o755)
+                print("Trivy erfolgreich installiert.")
+            else:
+                print("Trivy ist bereits installiert.")
+
         try:
-            # Trivy installieren (Download und Entpacken)
-            print("Installiere Trivy...")
-            trivy_install_cmd = "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"
-            subprocess.run(trivy_install_cmd, shell=True, check=True)
-            
+            install_trivy()
             # requests installieren
             subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
         except Exception as e:
