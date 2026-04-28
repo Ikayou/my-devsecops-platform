@@ -40,9 +40,20 @@ spec:
         import os
         import json
 
-        # 1. Installation der benötigten Bibliotheken
+        # 1. Installation von Trivy und requests
         print("--- Vorbereitung beginnt ---")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
+        try:
+            # Trivy installieren (Download und Entpacken)
+            print("Installiere Trivy...")
+            trivy_install_cmd = "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"
+            subprocess.run(trivy_install_cmd, shell=True, check=True)
+            
+            # requests installieren
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
+        except Exception as e:
+            print(f"Fehler bei der Vorbereitung: {e}")
+            sys.exit(1)
+
         import requests
         from requests.auth import HTTPBasicAuth
 
