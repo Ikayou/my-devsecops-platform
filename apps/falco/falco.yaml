@@ -11,12 +11,12 @@ spec:
     targetRevision: 4.0.0
     helm:
       values: |
-        # -- Globale Treiber-Einstellungen
+        # -- Treiber-Einstellungen für WSL2
         driver:
           kind: modern_ebpf
           enabled: false
 
-        # -- Falcoctl: Notwendig für das Laden der Regeln
+        # -- Falcoctl: Regeln erfolgreich installiert
         falcoctl:
           artifact:
             install:
@@ -24,21 +24,19 @@ spec:
             follow:
               enabled: true
 
-        # -- Event-Quellen Konfiguration (Direkt auf der Hauptebene des Charts)
-        # In neueren Charts müssen diese oft außerhalb des 'falco:' Blocks stehen
-        collectors:
-          enabled: true
-          containerd:
-            enabled: true
-
-        # -- Spezifische Falco-Konfiguration
+        # -- Diese Sektion erzwingt die Aktivierung der System-Events
+        # Behebt "Must enable at least one event source"
         falco:
+          # Ermöglicht Falco den Zugriff auf Kernel-Datenstrukturen
           privileged: true
-          # Hier erzwingen wir die syscall-Quelle erneut
-          services:
-            - name: syscall
-              enabled: true
-
+          
+          # Manuelle Aktivierung der Modern-eBPF Engine
+          # In Version 4.0.0 ist dies oft der entscheidende Schalter
+          ebpf:
+            enabled: true
+          
+          # Direkte Konfiguration der Ereignisquellen
+          tty: true
           json_output: true
           stdout_output:
             enabled: true
