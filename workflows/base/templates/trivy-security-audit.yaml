@@ -63,7 +63,7 @@ spec:
             trivy_path = "/usr/local/bin/trivy"
             if not os.path.exists(trivy_path):
                 print("Installiere Trivy...")
-                # ARM64環境用
+                
                 url = "https://github.com/aquasecurity/trivy/releases/download/v0.70.0/trivy_0.70.0_Linux-ARM64.tar.gz"
                 urllib.request.urlretrieve(url, "/tmp/trivy.tar.gz")
                 with tarfile.open("/tmp/trivy.tar.gz", "r:gz") as tar:
@@ -115,6 +115,7 @@ spec:
                 send_slack_message(cve_id, pkg, v.get('Severity'), img)
             else:
                 print(f"Jira Fehler: {res.status_code}")
+                print(res.text)
 
         try:
             target_image = os.getenv("TARGET_IMAGE")
