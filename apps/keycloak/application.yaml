@@ -5,6 +5,7 @@ metadata:
   namespace: argocd
 spec:
   project: default
+
   source:
     repoURL: https://charts.bitnami.com/bitnami
     chart: keycloak
@@ -13,7 +14,8 @@ spec:
       values: |
         auth:
           adminUser: admin
-          adminPassword: "password123"
+          existingSecret: keycloak-admin-secret
+          passwordSecretKey: admin-password
 
         image:
           registry: docker.io
@@ -22,8 +24,10 @@ spec:
 
         postgresql:
           auth:
-            password: "password123" 
-            postgresPassword: "password123"
+            existingSecret: keycloak-postgresql-secret
+            secretKeys:
+              adminPasswordKey: postgres-password
+              userPasswordKey: password
           image:
             registry: docker.io
             repository: bitnami/postgresql
@@ -31,9 +35,11 @@ spec:
 
         proxy: edge
         httpRelativePath: /
+
   destination:
     server: https://kubernetes.default.svc
     namespace: keycloak
+
   syncPolicy:
     automated:
       prune: true
