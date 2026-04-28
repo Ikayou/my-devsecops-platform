@@ -44,31 +44,19 @@ spec:
 
         print("--- Vorbereitung beginnt ---")
         
-        # 1. Trivy manuell mit Python herunterladen und installieren
         def install_trivy():
             trivy_path = "/usr/local/bin/trivy"
             if not os.path.exists(trivy_path):
-                print("Trivy nicht gefunden. Installation läuft...")
-                # Download URL für ARM64 (Ihre Umgebung laut Log)
+                print("Installiere Trivy...")
                 url = "https://github.com/aquasecurity/trivy/releases/download/v0.70.0/trivy_0.70.0_Linux-ARM64.tar.gz"
-                tar_path = "/tmp/trivy.tar.gz"
-                
-                # Herunterladen
-                urllib.request.urlretrieve(url, tar_path)
-                
-                # Entpacken
-                with tarfile.open(tar_path, "r:gz") as tar:
+                urllib.request.urlretrieve(url, "/tmp/trivy.tar.gz")
+                with tarfile.open("/tmp/trivy.tar.gz", "r:gz") as tar:
                     tar.extract("trivy", path="/usr/local/bin")
-                
-                # Ausführbar machen
                 os.chmod(trivy_path, 0o755)
                 print("Trivy erfolgreich installiert.")
-            else:
-                print("Trivy ist bereits installiert.")
 
         try:
             install_trivy()
-            # requests installieren
             subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
         except Exception as e:
             print(f"Fehler bei der Vorbereitung: {e}")
@@ -77,82 +65,57 @@ spec:
         import requests
         from requests.auth import HTTPBasicAuth
 
-        def create_jira_issue(cve_id, severity, pkg, fixed_version, title):
+        def send_slack_message(text):
+            slack_url = os.getenv("SLACK_URL")
+            if not slack_url:
+                return
+            payload = {"text": text}
+            requests.post(slack_url, json=payload)
+
+        def create_jira_issue(v):
             jira_url = os.getenv("JIRA_URL")
             user = os.getenv("JIRA_USER")
             token = os.getenv("JIRA_TOKEN")
             project_key = os.getenv("JIRA_PROJECT")
-
-            print(f"Versuche Jira-Ticket zu erstellen: {cve_id} (Projekt: {project_key})")
-
+            
+            cve_id = v.get('VulnerabilityID')
+            pkg = v.get('PkgName')
+            
             endpoint = f"{jira_url}/rest/api/3/issue"
             auth = HTTPBasicAuth(user, token)
             
-            # Beschreibung des Tickets auf Deutsch
-            description_text = (
-                f"Trivy Scan Fund: {pkg}\n"
-                f"Schweregrad: {severity}\n"
-                f"Verfügbarer Fix: {fixed_version}\n"
-                f"Beschreibung: {title}"
-            )
-            
+            desc = f"Trivy Scan Fund: {pkg}\nSchweregrad: {v.get('Severity')}\nFix: {v.get('FixedVersion', 'N/A')}"
             payload = {
                 "fields": {
                     "project": {"key": project_key},
                     "summary": f"Sicherheit: {cve_id} in {pkg} gefunden",
                     "description": {
                         "type": "doc", "version": 1,
-                        "content": [{
-                            "type": "paragraph", 
-                            "content": [{"type": "text", "text": description_text}]
-                        }]
+                        "content": [{"type": "paragraph", "content": [{"type": "text", "text": desc}]}]
                     },
-                    "issuetype": {"name": "Bug"}
+                    "issuetype": {"name": "Task"} # Bug oder Task je nach Bedarf anpassen
                 }
             }
             
             res = requests.post(endpoint, json=payload, auth=auth)
-            print(f"Jira API Antwort-Status: {res.status_code}")
-            if res.status_code != 201:
-                print(f"Jira Fehler-Details: {res.text}")
+            if res.status_code == 201:
+                print(f"Erfolg: Ticket für {cve_id} erstellt.")
+                send_slack_message(f" Jira Ticket erstellt: {cve_id} in {pkg} (Projekt: {project_key})")
             else:
-                print(f"Erfolg: Ticket für {cve_id} wurde erstellt.")
+                print(f"Jira Fehler ({res.status_code}): {res.text}")
 
-        # --- Hauptprozess ---
         try:
-            # Test-Image mit bekannten Schwachstellen
-            target_image = "alpine:3.7" 
-            print(f"Starte Sicherheits-Scan für: {target_image}")
-            
+            target_image = "alpine:3.7"
+            print(f"Starte Scan für: {target_image}")
             cmd = ["/usr/local/bin/trivy", "image", "--severity", "HIGH,CRITICAL", "--format", "json", target_image]
             result = subprocess.run(cmd, capture_output=True, text=True)
             
-            if result.returncode != 0:
-                print(f"Trivy-Fehler: {result.stderr}")
-                sys.exit(1)
-
             report = json.loads(result.stdout)
-            vulns_found = 0
-
             if "Results" in report:
-                for res in report["Results"]:
-                    if "Vulnerabilities" in res:
-                        vulns = res["Vulnerabilities"]
-                        vulns_found = len(vulns)
-                        print(f"{vulns_found} Schwachstellen gefunden.")
-                        
-                        # Erstelle Tickets für die ersten 3 Funde (Testlauf)
-                        for v in vulns[:3]:
-                            create_jira_issue(
-                                v.get('VulnerabilityID'),
-                                v.get('Severity'),
-                                v.get('PkgName'),
-                                v.get('FixedVersion', 'N/A'),
-                                v.get('Title', 'Keine Beschreibung verfügbar')
-                            )
-            
-            if vulns_found == 0:
-                print("Keine HIGH oder CRITICAL Schwachstellen gefunden.")
-
+                for r in report["Results"]:
+                    if "Vulnerabilities" in r:
+                        print(f"{len(r['Vulnerabilities'])} Schwachstellen gefunden.")
+                        for v in r["Vulnerabilities"][:10]:  # Nur die Top 10 anzeigen
+                            create_jira_issue(v)
         except Exception as e:
             print(f"Unerwarteter Fehler: {e}")
