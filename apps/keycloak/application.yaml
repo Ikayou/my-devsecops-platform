@@ -26,7 +26,7 @@ spec:
             postgresPassword: "password123"
           image:
             registry: docker.io
-            repository: bitnamilegacy/postgresql
+            repository: bitnami/postgresql
             tag: "16.3.0-debian-12"
 
         proxy: edge
