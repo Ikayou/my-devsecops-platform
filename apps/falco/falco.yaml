@@ -8,30 +8,28 @@ spec:
   source:
     repoURL: https://falcosecurity.github.io/charts
     chart: falco
-    targetRevision: 4.0.0  
+    targetRevision: 4.0.0
     helm:
       values: |
-        driver:
-          kind: ebpf 
-      
-        ebpf:
-          enabled: true
         
+        driver:
+          kind: ebpf
+        falcoctl:
+          artifact:
+            install:
+              enabled: true
+            follow:
+              enabled: true
+
         falco:
-          privileged: true 
-          tty: true
-          can_mount_host_fs: true
-          syscall_buf_size_preset: 2
           json_output: true
           stdout_output:
             enabled: true
-
           http_output:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
-        mounts:
-          hostRoot: true
 
+          privileged: true
         falcosidekick:
           enabled: true
           webui:
