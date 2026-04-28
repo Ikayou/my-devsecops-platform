@@ -11,44 +11,38 @@ spec:
     targetRevision: 4.0.0
     helm:
       values: |
-        # -- Treiber-Konfiguration: Verwendung von Modern eBPF für maximale Kompatibilität
+        # -- Treiber-Konfiguration
         driver:
-          enabled: false      # Deaktiviert den alten Driver-Loader
-          kind: modern_ebpf    # Nutzt BTF-Technologie, kein Build auf dem Host erforderlich
+          kind: modern_ebpf
+          enabled: false # Nicht benötigt für Modern eBPF
 
-        # -- Falcoctl: Automatisierung von Rules und Artifacts
+        # -- Falcoctl: Automatisierung von Rules
         falcoctl:
           artifact:
             install:
-              enabled: true   # Installiert Standard-Regelsätze beim Start
+              enabled: true
             follow:
-              enabled: true    # Überwacht Aktualisierungen der Regeln
+              enabled: true
 
         # -- Hauptkonfiguration von Falco
         falco:
-          privileged: true    # Erforderlich für den Zugriff auf Kernel-Schnittstellen
+          privileged: true
           
-          # Ausgabe-Einstellungen (JSON für SIEM/Sidekick-Integration)
+          # NEU: Aktiviert die Ereignisquellen für Systemaufrufe
+          # Erforderlich für Modern eBPF, um zu wissen, was überwacht werden soll.
+          event_sources:
+            syscall:
+              enabled: true
+
           json_output: true
           stdout_output:
             enabled: true
-          
-          # Weiterleitung der Alarme an Falcosidekick
           http_output:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
 
-        # -- Falcosidekick: Visualisierung und Benachrichtigung
+        # -- Falcosidekick
         falcosidekick:
           enabled: true
           webui:
-            enabled: true     # Aktiviert das Web-Dashboard für Echtzeit-Monitoring
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: falco
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+            enabled: true
