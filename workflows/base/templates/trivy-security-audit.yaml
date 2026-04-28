@@ -38,24 +38,13 @@ spec:
         import subprocess
         import sys
         import os
-
-        # 1. requests Bibliothek installieren (für Slack und Jira API)
-        print("Installing requests library...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
-        
-        # 2. Nach der Installation von Trivy suchen und installieren
         import json
+
+        # 1. Installation der benötigten Bibliotheken
+        print("--- Vorbereitung beginnt ---")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
         import requests
         from requests.auth import HTTPBasicAuth
-
-        # Initialisierung der Umgebung
-        print("Initialisierung der Umgebung...")
-        subprocess.check_call(["apt-get", "update", "-y"])
-        subprocess.check_call(["apt-get", "install", "-y", "curl"])
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
-        
-        # Installation von Trivy
-        subprocess.check_call(["sh", "-c", "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"])
 
         def create_jira_issue(cve_id, severity, pkg, fixed_version, title):
             jira_url = os.getenv("JIRA_URL")
@@ -63,74 +52,76 @@ spec:
             token = os.getenv("JIRA_TOKEN")
             project_key = os.getenv("JIRA_PROJECT")
 
-            if not all([jira_url, user, token, project_key]):
-                print("Jira-Konfiguration unvollstaendig.")
-                return
+            print(f"Versuche Jira-Ticket zu erstellen: {cve_id} (Projekt: {project_key})")
 
             endpoint = f"{jira_url}/rest/api/3/issue"
             auth = HTTPBasicAuth(user, token)
             
+            # Beschreibung des Tickets auf Deutsch
             description_text = (
-                f"Trivy Scan Fund:\n\n"
-                f"Paket: {pkg}\n"
+                f"Trivy Scan Fund: {pkg}\n"
                 f"Schweregrad: {severity}\n"
-                f"Fix verfügbar: {fixed_version}\n"
-                f"Details: {title}"
+                f"Verfügbarer Fix: {fixed_version}\n"
+                f"Beschreibung: {title}"
             )
-
+            
             payload = {
                 "fields": {
                     "project": {"key": project_key},
-                    "summary": f"Sicherheit: {cve_id} in {pkg}",
+                    "summary": f"Sicherheit: {cve_id} in {pkg} gefunden",
                     "description": {
                         "type": "doc", "version": 1,
-                        "content": [{"type": "paragraph", "content": [{"type": "text", "text": description_text}]}]
+                        "content": [{
+                            "type": "paragraph", 
+                            "content": [{"type": "text", "text": description_text}]
+                        }]
                     },
                     "issuetype": {"name": "Bug"}
                 }
             }
-            requests.post(endpoint, json=payload, auth=auth)
+            
+            res = requests.post(endpoint, json=payload, auth=auth)
+            print(f"Jira API Antwort-Status: {res.status_code}")
+            if res.status_code != 201:
+                print(f"Jira Fehler-Details: {res.text}")
+            else:
+                print(f"Erfolg: Ticket für {cve_id} wurde erstellt.")
 
+        # --- Hauptprozess ---
         try:
-            target_image = "quay.io/keycloak/keycloak:latest"
-            print(f"Starte Scan fuer: {target_image}")
+            # Test-Image mit bekannten Schwachstellen
+            target_image = "alpine:3.7" 
+            print(f"Starte Sicherheits-Scan für: {target_image}")
             
             cmd = ["/usr/local/bin/trivy", "image", "--severity", "HIGH,CRITICAL", "--format", "json", target_image]
             result = subprocess.run(cmd, capture_output=True, text=True)
             
-            # Fehlerbehandlung für Trivy-Ausführung
             if result.returncode != 0:
-                print(f"Trivy Fehler-Output: {result.stderr}")
-                sys.exit(1)  # Fehlercode zurückgeben, damit Argo den Fehler erkennt
+                print(f"Trivy-Fehler: {result.stderr}")
+                sys.exit(1)
 
-            if not result.stdout.strip():
-                print("Trivy hat keinen Output geliefert.")
-                sys.exit(1)  # Fehlercode zurückgeben, damit Argo den Fehler erkennt
-            
             report = json.loads(result.stdout)
-            detailed_vulns = []
-            
+            vulns_found = 0
+
             if "Results" in report:
                 for res in report["Results"]:
                     if "Vulnerabilities" in res:
-                        for v in res["Vulnerabilities"]:
-                            v_id = v.get('VulnerabilityID')
-                            sev = v.get('Severity')
-                            pkg = v.get('PkgName')
-                            fix = v.get('FixedVersion', 'Diskussion erforderlich')
-                            ttl = v.get('Title', 'Keine Beschreibung')
-                            
-                            # Slack-Benachrichtigung vorbereiten
-                            detailed_vulns.append(f"ID: {v_id} ({sev})\nPaket: {pkg}\n---")
-                            
-                            # Jira-Ticket erstellen
-                            create_jira_issue(v_id, sev, pkg, fix, ttl)
-
-            # Slack-Benachrichtigung mit den gefundenen Schwachstellen
-            webhook_url = os.getenv("SLACK_WEBHOOK_URL")
-            if detailed_vulns:
-                msg = f"Trivy Bericht: {len(detailed_vulns)} Funde. Tickets wurden in Jira erstellt.\n\n" + "\n".join(detailed_vulns[:10])
-                requests.post(webhook_url, json={"text": msg})
+                        vulns = res["Vulnerabilities"]
+                        vulns_found = len(vulns)
+                        print(f"{vulns_found} Schwachstellen gefunden.")
+                        
+                        # Erstelle Tickets für die ersten 3 Funde (Testlauf)
+                        for v in vulns[:3]:
+                            create_jira_issue(
+                                v.get('VulnerabilityID'),
+                                v.get('Severity'),
+                                v.get('PkgName'),
+                                v.get('FixedVersion', 'N/A'),
+                                v.get('Title', 'Keine Beschreibung verfügbar')
+                            )
+            
+            if vulns_found == 0:
+                print("Keine HIGH oder CRITICAL Schwachstellen gefunden.")
 
         except Exception as e:
-            print(f"Fehler: {e}")
+            print(f"Unerwarteter Fehler: {e}")
