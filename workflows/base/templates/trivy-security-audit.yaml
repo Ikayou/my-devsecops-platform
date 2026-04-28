@@ -97,14 +97,14 @@ spec:
             
             # Jira-Beschreibung mit strukturierter Formatierung
             full_description = (
-                f"h3. Details zur Schwachstelle\n"
-                f"* *ID:* {cve_id}\n"
-                f"* *Paket:* {pkg}\n"
-                f"* *Schweregrad:* {severity}\n"
-                f"* *Fix verfügbar in:* {v.get('FixedVersion', 'N/A')}\n\n"
-                f"h3. Zusammenfassung\n{title}\n\n"
-                f"h3. Beschreibung\n{description}\n\n"
-                f"h3. Referenz\n{url}"
+                f"Details zur Schwachstelle\n"
+                f"ID: {cve_id}\n"
+                f"Paket: {pkg}\n"
+                f"Schweregrad: {severity}\n"
+                f"Fix verfügbar in: {v.get('FixedVersion', 'N/A')}\n\n"
+                f"Zusammenfassung\n{title}\n\n"
+                f"Beschreibung\n{description}\n\n"
+                f"Referenz\n{url}"
             )
             
             payload = {
