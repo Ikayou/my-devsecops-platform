@@ -12,7 +12,7 @@ spec:
     helm:
       values: |
         driver:
-          kind: modern_ebpf
+          kind: module
           enabled: true
 
         falco:
