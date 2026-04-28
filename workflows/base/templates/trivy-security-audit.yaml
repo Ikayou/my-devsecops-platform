@@ -44,6 +44,7 @@ spec:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
         
         # 2. Nach der Installation von Trivy suchen und installieren
+        import json
         import requests
         from requests.auth import HTTPBasicAuth
 
