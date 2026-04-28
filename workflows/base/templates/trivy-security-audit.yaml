@@ -79,21 +79,62 @@ spec:
         import requests
         from requests.auth import HTTPBasicAuth
 
-        def send_slack_message(cve_id, pkg, severity, img):
+        def send_slack_message(cve_id, pkg, severity, installed_version, fixed_version, title):
             slack_url = os.getenv("SLACK_WEBHOOK_URL")
-            if not slack_url: return
-            msg = f" *Schwachstelle in {img}*\n*ID:* {cve_id}\n*Paket:* {pkg}\n*Grad:* {severity}"
+            if not slack_url:
+                return
+
+            msg = (
+                f"ID: {cve_id} ({severity})\n"
+                f"Paket: {pkg} (Installiert: {installed_version})\n"
+                f"Fix-Version: {fixed_version}\n"
+                f"Titel: {title}"
+            )
+
             requests.post(slack_url, json={"text": msg})
+
+        def jira_issue_exists(cve_id, img):
+            jira_url = os.getenv("JIRA_URL")
+            user = os.getenv("JIRA_USER")
+            token = os.getenv("JIRA_TOKEN")
+            project_key = os.getenv("JIRA_PROJECT")
+
+            jql = f'project = "{project_key}" AND summary ~ "{cve_id}" AND summary ~ "{img}"'
+
+            res = requests.get(
+                f"{jira_url}/rest/api/3/search/jql",
+                params={"jql": jql, "maxResults": 1},
+                auth=HTTPBasicAuth(user, token)
+            )
+
+            if res.status_code != 200:
+                print(f"Jira Suche Fehler: {res.status_code}")
+                print(res.text)
+                return False
+
+            data = res.json()
+            return data.get("total", 0) > 0
 
         def create_jira_issue(v, img):
             jira_url, user, token, project_key = os.getenv("JIRA_URL"), os.getenv("JIRA_USER"), os.getenv("JIRA_TOKEN"), os.getenv("JIRA_PROJECT")
-            cve_id, pkg = v.get('VulnerabilityID', 'Unknown'), v.get('PkgName', 'Unknown')
+
+            cve_id = v.get('VulnerabilityID', 'Unknown')
+            pkg = v.get('PkgName', 'Unknown')
+            severity = v.get('Severity', 'N/A')
+            installed_version = v.get('InstalledVersion', 'N/A')
+            fixed_version = v.get('FixedVersion', 'N/A')
+            title = v.get('Title', 'Keine Beschreibung')
+
+            if jira_issue_exists(cve_id, img):
+                print(f"Ticket existiert bereits: {cve_id} für {img}. Überspringe.")
+                return
             
             full_description = (
                 f"DETAILS ZUR SCHWACHSTELLE\n"
                 f"Image: {img}\n"
                 f"ID: {cve_id}\n"
-                f"Paket: {pkg}\n"
+                f"Paket: {pkg} (Installiert: {installed_version})\n"
+                f"Schweregrad: {v.get('Severity', 'N/A')}\n"
                 f"Fix: {v.get('FixedVersion', 'N/A')}\n\n"
                 f"BESCHREIBUNG\n{v.get('Description', 'Keine Details')}"
             )
@@ -101,7 +142,7 @@ spec:
             payload = {
                 "fields": {
                     "project": {"key": project_key},
-                    "summary": f"Sicherheit ({img}): {cve_id}",
+                    "summary": f"[{severity}] {img} - {cve_id}",
                     "description": {
                         "type": "doc", "version": 1,
                         "content": [{"type": "paragraph", "content": [{"type": "text", "text": full_description}]}]
@@ -112,7 +153,7 @@ spec:
             res = requests.post(f"{jira_url}/rest/api/3/issue", json=payload, auth=HTTPBasicAuth(user, token))
             if res.status_code == 201:
                 print(f"Erfolg: Ticket für {cve_id} erstellt.")
-                send_slack_message(cve_id, pkg, v.get('Severity'), img)
+                send_slack_message(cve_id, pkg, severity, installed_version, fixed_version, title)
             else:
                 print(f"Jira Fehler: {res.status_code}")
                 print(res.text)
