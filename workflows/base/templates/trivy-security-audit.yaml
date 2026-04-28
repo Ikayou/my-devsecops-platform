@@ -3,7 +3,9 @@ kind: WorkflowTemplate
 metadata:
   name: trivy-security-scanner
 spec:
+  entrypoint: security-scan-pipeline # 
   templates:
+  # 1. scan pipeline template (Hauptpipeline, die die Liste der zu scannenden Images verwaltet)
   - name: security-scan-pipeline
     steps:
     - - name: scan-selected-images
@@ -12,19 +14,23 @@ spec:
           parameters:
           - name: target_image
             value: "{{item}}"
-        # Hier können weitere Images hinzugefügt werden, die regelmäßig gescannt werden sollen
         withItems:
           - "docker.io/bitnamilegacy/keycloak:26"
           - "docker.io/bitnamilegacy/postgresql:16"
           - "nginx:1.30.0"
           - "quay.io/argoproj/argocd:v3.3.8"
+
+  # 2. scan-image template (führt den eigentlichen Trivy-Scan durch und erstellt bei Bedarf Jira-Tickets und Slack-Benachrichtigungen)
   - name: scan-image
+    inputs: # Eingabeparameter für das zu scannende Image
+      parameters:
+      - name: target_image
     script:
       image: python:3.9-slim
       command: [python]
       env:
-      - name: TARGET_IMAGE  # Umgebungsvariable für das zu scannende Image
-        value: "{{inputs.parameters.target_image}}"
+      - name: TARGET_IMAGE
+        value: "{{inputs.parameters.target_image}}" # Eingabeparameter für das zu scannende Image
       - name: SLACK_WEBHOOK_URL
         valueFrom:
           secretKeyRef:
@@ -56,6 +62,8 @@ spec:
         def install_trivy():
             trivy_path = "/usr/local/bin/trivy"
             if not os.path.exists(trivy_path):
+                print("Installiere Trivy...")
+                # ARM64環境用
                 url = "https://github.com/aquasecurity/trivy/releases/download/v0.70.0/trivy_0.70.0_Linux-ARM64.tar.gz"
                 urllib.request.urlretrieve(url, "/tmp/trivy.tar.gz")
                 with tarfile.open("/tmp/trivy.tar.gz", "r:gz") as tar:
@@ -66,7 +74,7 @@ spec:
             install_trivy()
             subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
         except Exception as e:
-            print(f"Fehler: {e}"); sys.exit(1)
+            print(f"Fehler bei Vorbereitung: {e}"); sys.exit(1)
 
         import requests
         from requests.auth import HTTPBasicAuth
@@ -87,13 +95,12 @@ spec:
                 f"ID: {cve_id}\n"
                 f"Paket: {pkg}\n"
                 f"Fix: {v.get('FixedVersion', 'N/A')}\n\n"
-                f"BESCHREIBUNG\n{v.get('Description', 'N/A')}"
+                f"BESCHREIBUNG\n{v.get('Description', 'Keine Details')}"
             )
             
             payload = {
                 "fields": {
                     "project": {"key": project_key},
-                    
                     "summary": f"Sicherheit ({img}): {cve_id}",
                     "description": {
                         "type": "doc", "version": 1,
@@ -104,7 +111,10 @@ spec:
             }
             res = requests.post(f"{jira_url}/rest/api/3/issue", json=payload, auth=HTTPBasicAuth(user, token))
             if res.status_code == 201:
+                print(f"Erfolg: Ticket für {cve_id} erstellt.")
                 send_slack_message(cve_id, pkg, v.get('Severity'), img)
+            else:
+                print(f"Jira Fehler: {res.status_code}")
 
         try:
             target_image = os.getenv("TARGET_IMAGE")
@@ -120,4 +130,4 @@ spec:
                             create_jira_issue(v, target_image)
             print(f"Scan für {target_image} abgeschlossen.")
         except Exception as e:
-            print(f"Fehler: {e}")
+            print(f"Unerwarteter Fehler: {e}")
