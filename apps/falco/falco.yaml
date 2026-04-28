@@ -11,12 +11,12 @@ spec:
     targetRevision: 4.0.0
     helm:
       values: |
-        # -- Treiber-Konfiguration
+        # -- Treiber-Konfiguration: Modern eBPF für WSL2/Kind Stabilität
         driver:
           kind: modern_ebpf
-          enabled: false # Nicht benötigt für Modern eBPF
+          enabled: false
 
-        # -- Falcoctl: Automatisierung von Rules
+        # -- Falcoctl: Automatisierung von Sicherheitsregeln
         falcoctl:
           artifact:
             install:
@@ -24,16 +24,14 @@ spec:
             follow:
               enabled: true
 
-        # -- Hauptkonfiguration von Falco
+        # -- Hauptkonfiguration und Event-Quellen
         falco:
           privileged: true
-          
-          # NEU: Aktiviert die Ereignisquellen für Systemaufrufe
-          # Erforderlich für Modern eBPF, um zu wissen, was überwacht werden soll.
+          # Aktiviert die Überwachung von Systemaufrufen (behebt den vorherigen Fehler)
           event_sources:
             syscall:
               enabled: true
-
+          
           json_output: true
           stdout_output:
             enabled: true
@@ -41,8 +39,20 @@ spec:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
 
-        # -- Falcosidekick
+        # -- Falcosidekick für Dashboard und Benachrichtigungen
         falcosidekick:
           enabled: true
           webui:
             enabled: true
+  
+  # -- Ziel-Konfiguration (Muss auf der gleichen Ebene wie 'source' stehen!)
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: falco
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
