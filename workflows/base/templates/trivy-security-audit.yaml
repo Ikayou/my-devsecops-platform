@@ -144,14 +144,30 @@ spec:
         try:
             target_image = os.getenv("TARGET_IMAGE")
             print(f"Starte Scan für: {target_image}")
-            cmd = ["/usr/local/bin/trivy", "image", "--severity", "HIGH,CRITICAL", "--format", "json", target_image]
+            cmd = ["/usr/local/bin/trivy", "image", "--severity", "CRITICAL", "--format", "json", target_image]
             result = subprocess.run(cmd, capture_output=True, text=True)
-            
+
+            if result.returncode != 0:
+                print("Trivy Scan Fehler")
+                print("STDOUT:")
+                print(result.stdout)
+                print("STDERR:")
+                print(result.stderr)
+                sys.exit(1)
+
+            if not result.stdout.strip():
+                print("Trivy hat keine Ausgabe geliefert.")
+                print("STDERR:")
+                print(result.stderr)
+                sys.exit(1)
+
             report = json.loads(result.stdout)
             if "Results" in report:
                 for r in report["Results"]:
                     if "Vulnerabilities" in r:
                         for v in r["Vulnerabilities"]:
+                            if v.get("Severity") != "CRITICAL":
+                                continue
                             create_jira_issue(v, target_image)
             print(f"Scan für {target_image} abgeschlossen.")
         except Exception as e:
