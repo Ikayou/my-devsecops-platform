@@ -95,19 +95,17 @@ spec:
             target_image = "quay.io/keycloak/keycloak:latest"
             print(f"Starte Scan fuer: {target_image}")
             
-            # Trivy-Scan ausführen
             cmd = ["/usr/local/bin/trivy", "image", "--severity", "HIGH,CRITICAL", "--format", "json", target_image]
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             # Fehlerbehandlung für Trivy-Ausführung
             if result.returncode != 0:
                 print(f"Trivy Fehler-Output: {result.stderr}")
-                return
+                sys.exit(1)  # Fehlercode zurückgeben, damit Argo den Fehler erkennt
 
-            # JSON-Output von Trivy parsen
             if not result.stdout.strip():
                 print("Trivy hat keinen Output geliefert.")
-                return
+                sys.exit(1)  # Fehlercode zurückgeben, damit Argo den Fehler erkennt
             
             report = json.loads(result.stdout)
             detailed_vulns = []
