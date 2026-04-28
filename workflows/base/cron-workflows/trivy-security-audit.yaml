@@ -5,6 +5,7 @@ metadata:
   namespace: argo
 spec:
   schedule: "0 2 * * *"  # Taeglich um 02:00 UTC
+  timezone: "Europe/Berlin"
   concurrencyPolicy: "Replace"
   startingDeadlineSeconds: 600
   workflowSpec:
