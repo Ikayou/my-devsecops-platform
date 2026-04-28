@@ -11,29 +11,38 @@ spec:
     targetRevision: 4.0.0
     helm:
       values: |
-        
+        # -- Treiber-Konfiguration: Verwendung von Modern eBPF für maximale Kompatibilität
         driver:
-          kind: ebpf
+          enabled: false      # Deaktiviert den alten Driver-Loader
+          kind: modern_ebpf    # Nutzt BTF-Technologie, kein Build auf dem Host erforderlich
+
+        # -- Falcoctl: Automatisierung von Rules und Artifacts
         falcoctl:
           artifact:
             install:
-              enabled: true
+              enabled: true   # Installiert Standard-Regelsätze beim Start
             follow:
-              enabled: true
+              enabled: true    # Überwacht Aktualisierungen der Regeln
 
+        # -- Hauptkonfiguration von Falco
         falco:
+          privileged: true    # Erforderlich für den Zugriff auf Kernel-Schnittstellen
+          
+          # Ausgabe-Einstellungen (JSON für SIEM/Sidekick-Integration)
           json_output: true
           stdout_output:
             enabled: true
+          
+          # Weiterleitung der Alarme an Falcosidekick
           http_output:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
 
-          privileged: true
+        # -- Falcosidekick: Visualisierung und Benachrichtigung
         falcosidekick:
           enabled: true
           webui:
-            enabled: true
+            enabled: true     # Aktiviert das Web-Dashboard für Echtzeit-Monitoring
   destination:
     server: https://kubernetes.default.svc
     namespace: falco
