@@ -11,35 +11,35 @@ spec:
     chart: keycloak
     targetRevision: 22.1.0
     helm:
-  values: |
-    auth:
-      adminUser: admin
-      existingSecret: keycloak-admin-secret
-      passwordSecretKey: admin-password
+      values: |
+        auth:
+          adminUser: admin
+          existingSecret: keycloak-admin-secret
+          passwordSecretKey: admin-password
 
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/keycloak
-      tag: "26"
+        image:
+          registry: docker.io
+          repository: bitnamilegacy/keycloak
+          tag: "26.3.3-debian-12-r0"
 
-    postgresql:
-      enabled: true
-      auth:
-        existingSecret: keycloak-postgresql-secret
-        secretKeys:
-          adminPasswordKey: postgres-password
-          userPasswordKey: password
-      image:
-        registry: docker.io
-        repository: bitnamilegacy/postgresql
-        tag: "16.4.0-debian-12-r28"
+        postgresql:
+          enabled: true
+          auth:
+            existingSecret: keycloak-postgresql-secret
+            secretKeys:
+              adminPasswordKey: postgres-password
+              userPasswordKey: password
+          image:
+            registry: docker.io
+            repository: bitnamilegacy/postgresql
+            tag: "16.4.0-debian-12-r28"
 
-    proxy: edge
-    httpRelativePath: /
+        proxy: edge
+        httpRelativePath: /
 
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: keycloak
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: keycloak
 
   syncPolicy:
     automated:
