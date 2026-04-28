@@ -4,11 +4,26 @@ metadata:
   name: daily-trivy-security-scan
   namespace: argo
 spec:
-  schedule: "0 2 * * *"  # Taeglich um 02:00 UTC
+  # schedule: "0 0 * * *"  # Jeden Tag um Mitternacht (UTC) --- IGNORE ---
+  schedule: "0 2 * * *"
+  
+  # Zeitzone anpassen, falls nötig
   timezone: "Europe/Berlin"
+
+  # letzte laufende Instanz beenden, wenn die nächste startet
   concurrencyPolicy: "Replace"
+
+  # Zeitlimit für den Start der nächsten Instanz, falls die vorherige nicht rechtzeitig startet
   startingDeadlineSeconds: 600
+
+  # Anzahl der erfolgreichen und fehlgeschlagenen Jobs, die aufbewahrt werden sollen
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+
   workflowSpec:
+    # Berechtigungen für den Trivy-Scan
     serviceAccountName: workflow-runner
+    
+    # Bereits erstelltes Template aufrufen
     workflowTemplateRef:
       name: trivy-security-scanner
