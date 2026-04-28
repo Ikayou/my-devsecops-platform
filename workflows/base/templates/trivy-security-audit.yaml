@@ -26,7 +26,8 @@ spec:
       parameters:
       - name: target_image
     script:
-      image: python:3.9-slim
+      image: trivy-python-scanner:0.1
+      imagePullPolicy: IfNotPresent
       command: [python]
       env:
       - name: TARGET_IMAGE
@@ -57,25 +58,7 @@ spec:
             name: jira-creds
             key: project
       source: |
-        import subprocess, sys, os, json, urllib.request, tarfile
-
-        def install_trivy():
-            trivy_path = "/usr/local/bin/trivy"
-            if not os.path.exists(trivy_path):
-                print("Installiere Trivy...")
-                
-                url = "https://github.com/aquasecurity/trivy/releases/download/v0.70.0/trivy_0.70.0_Linux-ARM64.tar.gz"
-                urllib.request.urlretrieve(url, "/tmp/trivy.tar.gz")
-                with tarfile.open("/tmp/trivy.tar.gz", "r:gz") as tar:
-                    tar.extract("trivy", path="/usr/local/bin")
-                os.chmod(trivy_path, 0o755)
-
-        try:
-            install_trivy()
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
-        except Exception as e:
-            print(f"Fehler bei Vorbereitung: {e}"); sys.exit(1)
-
+        import subprocess, sys, os, json
         import requests
         from requests.auth import HTTPBasicAuth
 
