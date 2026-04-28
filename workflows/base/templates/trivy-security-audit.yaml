@@ -38,7 +38,12 @@ spec:
         import subprocess
         import sys
         import os
-        import json
+
+        # 1. requests Bibliothek installieren (für Slack und Jira API)
+        print("Installing requests library...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
+        
+        # 2. Nach der Installation von Trivy suchen und installieren
         import requests
         from requests.auth import HTTPBasicAuth
 
