@@ -13,8 +13,7 @@ spec:
       values: |
         auth:
           adminUser: admin
-          existingSecret: keycloak-admin-secret
-          passwordSecretKey: admin-password
+          adminPassword: "password123"
 
         image:
           registry: docker.io
