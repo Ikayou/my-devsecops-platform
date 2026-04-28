@@ -11,38 +11,47 @@ spec:
     targetRevision: 4.0.0
     helm:
       values: |
-        # -- Treiber-Einstellungen für WSL2
+        # -- Treiber-Einstellungen
         driver:
           kind: modern_ebpf
           enabled: false
 
-        # -- Falcoctl: Regeln erfolgreich installiert
+        # -- Falcoctl Konfiguration (Fix für artifact-follow Absturz)
         falcoctl:
           artifact:
             install:
               enabled: true
             follow:
               enabled: true
+          config:
+            artifact:
+              install:
+                # Verhindert Konflikte bei der Pfad-Auflösung
+                resolve_deps: false
 
-        # -- Diese Sektion erzwingt die Aktivierung der System-Events
-        # Behebt "Must enable at least one event source"
+        # -- Haupt-Engine Konfiguration
         falco:
-          # Ermöglicht Falco den Zugriff auf Kernel-Datenstrukturen
           privileged: true
-          
-          # Manuelle Aktivierung der Modern-eBPF Engine
-          # In Version 4.0.0 ist dies oft der entscheidende Schalter
+          # Erzwingt die modern_ebpf Engine auf Software-Ebene
           ebpf:
             enabled: true
           
-          # Direkte Konfiguration der Ereignisquellen
-          tty: true
+          # Sicherstellen, dass die System-Events aktiv sind
+          event_sources:
+            syscall:
+              enabled: true
+
           json_output: true
           stdout_output:
             enabled: true
           http_output:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
+
+        # -- Mount-Einstellungen für WSL2/Kind
+        # Dies stellt sicher, dass Falco Zugriff auf die notwendigen Host-Pfade hat
+        mounts:
+          hostRoot: true
 
         # -- Sidekick Integration
         falcosidekick:
