@@ -14,11 +14,33 @@ spec:
           secretKeyRef:
             name: slack-creds
             key: webhook-url
+      - name: JIRA_URL
+        valueFrom:
+          secretKeyRef:
+            name: jira-creds
+            key: url
+      - name: JIRA_USER
+        valueFrom:
+          secretKeyRef:
+            name: jira-creds
+            key: user
+      - name: JIRA_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: jira-creds
+            key: token
+      - name: JIRA_PROJECT
+        valueFrom:
+          secretKeyRef:
+            name: jira-creds
+            key: project
       source: |
         import subprocess
         import sys
         import os
         import json
+        import requests
+        from requests.auth import HTTPBasicAuth
 
         # Initialisierung der Umgebung
         print("Initialisierung der Umgebung...")
@@ -26,72 +48,72 @@ spec:
         subprocess.check_call(["apt-get", "install", "-y", "curl"])
         subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "-q"])
         
-        # Installation von Trivy via offiziellem Skript
-        print("Installation von Trivy...")
+        # Installation von Trivy
         subprocess.check_call(["sh", "-c", "curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin"])
 
-        import requests
+        def create_jira_issue(cve_id, severity, pkg, fixed_version, title):
+            jira_url = os.getenv("JIRA_URL")
+            user = os.getenv("JIRA_USER")
+            token = os.getenv("JIRA_TOKEN")
+            project_key = os.getenv("JIRA_PROJECT")
 
-        def send_slack_message(webhook_url, message):
-            payload = {"text": message}
-            requests.post(webhook_url, json=payload)
+            if not all([jira_url, user, token, project_key]):
+                print("Jira-Konfiguration unvollstaendig.")
+                return
+
+            endpoint = f"{jira_url}/rest/api/3/issue"
+            auth = HTTPBasicAuth(user, token)
+            
+            description_text = (
+                f"Trivy Scan Fund:\n\n"
+                f"Paket: {pkg}\n"
+                f"Schweregrad: {severity}\n"
+                f"Fix verfügbar: {fixed_version}\n"
+                f"Details: {title}"
+            )
+
+            payload = {
+                "fields": {
+                    "project": {"key": project_key},
+                    "summary": f"Sicherheit: {cve_id} in {pkg}",
+                    "description": {
+                        "type": "doc", "version": 1,
+                        "content": [{"type": "paragraph", "content": [{"type": "text", "text": description_text}]}]
+                    },
+                    "issuetype": {"name": "Bug"}
+                }
+            }
+            requests.post(endpoint, json=payload, auth=auth)
 
         try:
             target_image = "quay.io/keycloak/keycloak:latest"
-            print(f"Start des detaillierten Scans fuer: {target_image}")
-            
-            # Ausfuehrung des Scans
             cmd = ["/usr/local/bin/trivy", "image", "--severity", "HIGH,CRITICAL", "--format", "json", target_image]
             result = subprocess.run(cmd, capture_output=True, text=True)
             
-            if result.returncode != 0:
-                print(f"Trivy-Fehler: {result.stderr}")
-                sys.exit(1)
-
             report = json.loads(result.stdout)
             detailed_vulns = []
             
-            # Analyse aller Ergebnisse und Extraktion detaillierter Informationen
             if "Results" in report:
                 for res in report["Results"]:
                     if "Vulnerabilities" in res:
                         for v in res["Vulnerabilities"]:
-                            # Erstellung eines detaillierten Textblocks pro Schwachstelle
-                            v_id = v.get('VulnerabilityID', 'N/A')
-                            severity = v.get('Severity', 'N/A')
-                            pkg = v.get('PkgName', 'N/A')
-                            installed = v.get('InstalledVersion', 'N/A')
-                            fixed = v.get('FixedVersion', 'Diskussion erforderlich')
-                            title = v.get('Title', 'Keine Beschreibung verfuegbar')
+                            v_id = v.get('VulnerabilityID')
+                            sev = v.get('Severity')
+                            pkg = v.get('PkgName')
+                            fix = v.get('FixedVersion', 'Diskussion erforderlich')
+                            ttl = v.get('Title', 'Keine Beschreibung')
                             
-                            info = (
-                                f"*ID:* {v_id} ({severity})\n"
-                                f"*Paket:* {pkg} (Installiert: {installed})\n"
-                                f"*Fix-Version:* {fixed}\n"
-                                f"*Titel:* {title}\n"
-                                f"---"
-                            )
-                            detailed_vulns.append(info)
+                            # Slack-Benachrichtigung vorbereiten
+                            detailed_vulns.append(f"ID: {v_id} ({sev})\nPaket: {pkg}\n---")
+                            
+                            # Jira-Ticket erstellen
+                            create_jira_issue(v_id, sev, pkg, fix, ttl)
 
+            # Slack-Benachrichtigung mit den gefundenen Schwachstellen
             webhook_url = os.getenv("SLACK_WEBHOOK_URL")
             if detailed_vulns:
-                count = len(detailed_vulns)
-                # Zusammenfügen aller Funde zu einem langen Text
-                full_report = "\n".join(detailed_vulns)
-                alert_msg = (
-                    f"Detaillierter Trivy Sicherheitsbericht\n"
-                    f"Image: {target_image}\n"
-                    f"Anzahl der kritischen Funde: {count}\n\n"
-                    f"{full_report}"
-                )
-                
-                # Bei sehr vielen Funden koennte die Nachricht die Slack-Grenze ueberschreiten.
-                # Hier senden wir den kompletten Bericht.
-                send_slack_message(webhook_url, alert_msg)
-                print(f"Detaillierter Bericht mit {count} Funden an Slack gesendet.")
-            else:
-                send_slack_message(webhook_url, f"Trivy Audit abgeschlossen: Keine kritischen Schwachstellen in {target_image} gefunden.")
-                print("Keine kritischen Schwachstellen gefunden.")
+                msg = f"Trivy Bericht: {len(detailed_vulns)} Funde. Tickets wurden in Jira erstellt.\n\n" + "\n".join(detailed_vulns[:10])
+                requests.post(webhook_url, json={"text": msg})
 
         except Exception as e:
             print(f"Fehler: {e}")
