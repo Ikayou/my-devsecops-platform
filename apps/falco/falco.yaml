@@ -10,54 +10,24 @@ spec:
     chart: falco
     targetRevision: 4.0.0
     helm:
-      values: |
-        # -- Treiber-Einstellungen
-        driver:
-          kind: modern_ebpf
-          enabled: false
+  values: |
+    driver:
+      kind: modern_ebpf
+      enabled: true
 
-        # -- Falcoctl Konfiguration (Fix für artifact-follow Absturz)
-        falcoctl:
-          artifact:
-            install:
-              enabled: true
-            follow:
-              enabled: true
-          config:
-            artifact:
-              install:
-                # Verhindert Konflikte bei der Pfad-Auflösung
-                resolve_deps: false
+    falco:
+      privileged: true
+      json_output: true
+      stdout_output:
+        enabled: true
+      http_output:
+        enabled: true
+        url: "http://falco-falcosidekick:2801/"
 
-        # -- Haupt-Engine Konfiguration
-        falco:
-          privileged: true
-          # Erzwingt die modern_ebpf Engine auf Software-Ebene
-          ebpf:
-            enabled: true
-          
-          # Sicherstellen, dass die System-Events aktiv sind
-          event_sources:
-            syscall:
-              enabled: true
-
-          json_output: true
-          stdout_output:
-            enabled: true
-          http_output:
-            enabled: true
-            url: "http://falco-falcosidekick:2801/"
-
-        # -- Mount-Einstellungen für WSL2/Kind
-        # Dies stellt sicher, dass Falco Zugriff auf die notwendigen Host-Pfade hat
-        mounts:
-          hostRoot: true
-
-        # -- Sidekick Integration
-        falcosidekick:
-          enabled: true
-          webui:
-            enabled: true
+    falcosidekick:
+      enabled: true
+      webui:
+        enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: falco
