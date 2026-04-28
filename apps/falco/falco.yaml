@@ -17,9 +17,13 @@ spec:
 
         falco:
           privileged: true
+          tty: true
           json_output: true
           stdout_output:
             enabled: true
+            syscall_event_drops:
+              actions:
+                - log
           http_output:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
