@@ -19,7 +19,7 @@ spec:
           args:
             - |
               
-              TARGET_TIME=$(date -d '24 hours ago' +%s)
+              TARGET_TIME=$(date -d '1 minute ago' +%s)
               
               echo "Checking for workflows older than $(date -d @$TARGET_TIME)"
 
