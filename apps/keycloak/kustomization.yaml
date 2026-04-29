@@ -6,3 +6,9 @@ kind: Kustomization
 resources:
   - application.yaml
   - network-policy.yaml
+
+secretGenerator:
+  - name: keycloak-creds
+    literals:
+      - username=admin
+      - password=password123
