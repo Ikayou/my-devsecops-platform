@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Auflistung aller Kubernetes-Manifeste in diesem Verzeichnis
+resources:
+  - endpoint-ssl-monitor.yaml
+  - keycloak-api.yaml
+  - keycloak-audit.yaml
+  - system-log-audit.yaml
+  - trivy-security-audit.yaml
