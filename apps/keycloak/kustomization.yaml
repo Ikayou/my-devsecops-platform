@@ -6,9 +6,11 @@ kind: Kustomization
 resources:
   - application.yaml
   - network-policy.yaml
-
+generatorOptions:
+  disableNameSuffixHash: true
 secretGenerator:
   - name: keycloak-creds
     literals:
       - username=admin
       - password=password123
+    namespace: keycloak
