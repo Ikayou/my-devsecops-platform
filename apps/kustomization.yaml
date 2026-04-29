@@ -14,5 +14,5 @@ resources:
 
 # Gemeinsame Labels für die gesamte Plattform
 commonLabels:
+  platform: devsecops-project
   variant: development
-  managed-by: kustomize

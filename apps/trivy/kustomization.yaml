@@ -6,12 +6,3 @@ kind: Kustomization
 resources:
   - trivy.yaml
   - service-monitor.yaml
-
-# Gemeinsame Labels, die automatisch allen Ressourcen hinzugefügt werden
-# Dies ist nützlich für das Tracking innerhalb des Clusters
-commonLabels:
-  variant: development
-  managed-by: kustomize
-
-# Optional: Gemeinsames Namenspräfix für alle Ressourcen
-# namePrefix: dev-
