@@ -6,3 +6,4 @@ kind: Kustomization
 resources:
   - application.yaml
   - argo-workflows-app.yaml
+  - sealed-secret-argo.yaml
