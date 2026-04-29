@@ -11,28 +11,26 @@ spec:
     targetRevision: 3.0.0
     helm:
       values: |
-        # -- Global: Treiber-Einstellungen
-        # Wir deaktivieren den Driver-Loader komplett, da Modern eBPF ihn nicht benötigt.
+        # -- Treiber-Einstellungen
         driver:
-          enabled: false     # Erzwingt das Deaktivieren des fehlerhaften Init-Containers
-          kind: modern_ebpf
+          enabled: true
+          kind: modern_ebpf # WSL2 benötigt modern_ebpf
 
-        # -- Falcoctl: Regel-Management
-        falcoctl:
-          artifact:
-            install:
-              enabled: true
-            follow:
-              enabled: false
+        # -- Event-Quellen für Version 0.34.0 erzwingen
+        # In dieser Version muss syscall oft auf der obersten Ebene stehen
+        syscall:
+          enabled: true
 
-        # -- Haupt-Konfiguration
+        # -- Hauptkonfiguration
         falco:
           privileged: true
-          # Aktiviert die modern_ebpf Engine direkt in der Falco-Konfiguration
-          ebpf:
-            enabled: true
           
-          # Sicherstellen, dass syscalls überwacht werden
+          # Erzwungene Engine-Einstellung für ältere Versionen
+          # Dies behebt "Must enable at least one event source"
+          engine:
+            kind: modern_ebpf
+          
+          # Sicherstellen, dass syscall auch hier aktiv ist
           event_sources:
             syscall:
               enabled: true
@@ -44,11 +42,13 @@ spec:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
 
-        # -- Sidekick Integration
-        falcosidekick:
-          enabled: true
-          webui:
-            enabled: true
+        # -- Falcoctl: Regeln laden
+        falcoctl:
+          artifact:
+            install:
+              enabled: true
+            follow:
+              enabled: false
 
   destination:
     server: https://kubernetes.default.svc
