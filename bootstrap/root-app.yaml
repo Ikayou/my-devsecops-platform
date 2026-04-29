@@ -11,7 +11,7 @@ spec:
     path: apps
     kustomize:
       commonLabels:
-        platform: devsecops    
+        managed-by: argocd-kustomize  
   destination:
     server: "https://kubernetes.default.svc"
     namespace: argocd
