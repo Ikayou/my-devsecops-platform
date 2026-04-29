@@ -12,32 +12,31 @@ spec:
     helm:
       values: |
         driver:
-          kind: ebpf
+          kind: modern_ebpf
           enabled: true
           loader:
-            enabled: true
+            enabled: false
 
         falcoctl:
           artifact:
             install:
               enabled: true
             follow:
-              enabled: true   
+              enabled: false
 
         falco:
-          privileged: false   
+          privileged: true
           json_output: true
           stdout_output:
             enabled: true
           http_output:
             enabled: true
-            url: "http://{{ .Release.Name }}-falcosidekick:2801/" 
+            url: "http://falco-falcosidekick:2801/"
 
         falcosidekick:
           enabled: true
           webui:
             enabled: true
-            user: "admin:changeme"  
 
   destination:
     server: https://kubernetes.default.svc
