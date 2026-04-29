@@ -8,33 +8,28 @@ spec:
   source:
     repoURL: https://falcosecurity.github.io/charts
     chart: falco
-    targetRevision: 3.0.0
+    targetRevision: 4.5.0
     helm:
       values: |
         # -- Treiber-Einstellungen
         driver:
           enabled: true
-          kind: modern_ebpf # WSL2 benötigt modern_ebpf
+          kind: modern_ebpf # Modern eBPF benötigt keinen Init-Container (driver-loader)
 
-        # -- Event-Quellen für Version 0.34.0 erzwingen
-        # In dieser Version muss syscall oft auf der obersten Ebene stehen
-        syscall:
-          enabled: true
+        # -- Falcoctl: Automatische Regel-Aktualisierung
+        falcoctl:
+          artifact:
+            install:
+              enabled: true
+            follow:
+              enabled: true # Kann in v4.5.0 wieder aktiviert werden
 
-        # -- Hauptkonfiguration
+        # -- Haupt-Konfiguration
         falco:
           privileged: true
           
-          # Erzwungene Engine-Einstellung für ältere Versionen
-          # Dies behebt "Must enable at least one event source"
-          engine:
-            kind: modern_ebpf
-          
-          # Sicherstellen, dass syscall auch hier aktiv ist
-          event_sources:
-            syscall:
-              enabled: true
-
+          # In v4.5.0 wird die syscall-Quelle automatisch durch 'modern_ebpf' aktiviert.
+          # Wir stellen sicher, dass die Ausgabe korrekt konfiguriert ist.
           json_output: true
           stdout_output:
             enabled: true
@@ -42,18 +37,14 @@ spec:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
 
-        # -- Falcoctl: Regeln laden
-        falcoctl:
-          artifact:
-            install:
-              enabled: true
-            follow:
-              enabled: false
-
+        # -- Falcosidekick
+        falcosidekick:
+          enabled: true
+          webui:
+            enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: falco
-
   syncPolicy:
     automated:
       prune: true
