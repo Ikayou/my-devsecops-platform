@@ -11,10 +11,38 @@ spec:
     targetRevision: 6.6.2
     helm:
       values: |
+        deploymentMode: SingleBinary
         loki:
-          persistence:
-            enabled: false
-        promtail:
+          commonConfig:
+            replication_factor: 1
+          storage:
+            type: 'filesystem'
+          auth_enabled: false
+          # Explizite Angabe des Speicherinhalts zur Fehlerbehebung
+          storage_config:
+            filesystem:
+              directory: /var/loki/chunks
+            boltdb_shipper:
+              active_index_directory: /var/loki/index
+              cache_location: /var/loki/index_cache
+              resync_interval: 5s
+              shared_store: filesystem
+          schemaConfig:
+            configs:
+              - from: "2024-01-01"
+                store: boltdb-shipper
+                object_store: filesystem
+                schema: v11
+                index:
+                  prefix: index_
+                  period: 24h
+        
+        # Reduzierung der Komponenten zur Ressourcenoptimierung
+        singleBinary:
+          replicas: 1
+        test:
+          enabled: false
+        lokiCanary:
           enabled: false
   destination:
     server: https://kubernetes.default.svc
