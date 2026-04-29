@@ -2,14 +2,16 @@ name: Security Scan
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   scan:
     name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write # Berechtigung für report
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,9 +19,12 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          # scan image
-          image-ref: 'quay.io/keycloak/keycloak:latest'
-          format: 'table'
-          exit-code: '0' # wenn Schwachstelle gefunden wird stoppt es.
-          ignore-unfixed: true
-          severity: 'CRITICAL'
+          image-ref: 'quay.io/keycloak/keycloak:24.0.0'
+          format: 'sarif' 
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
