@@ -18,4 +18,18 @@ spec:
           # Vor 24h werden pods die nicht benutzt werden automatisch gelöscht.
           args:
             - |
-              kubectl delete wf -l "workflows.argoproj.io/completed=true" --field-selector="metadata.creationTimestamp<$(date -d '24 hours ago' -u +%Y-%m-%dT%H:%M:%SZ)"
+              
+              TARGET_TIME=$(date -d '24 hours ago' +%s)
+              
+              
+              kubectl get wf -l "workflows.argoproj.io/completed=true" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.creationTimestamp}{"\n"}{end}' | \
+              while read name time; do
+                
+                wf_time=$(date -d "$time" +%s)
+                
+                
+                if [ "$wf_time" -lt "$TARGET_TIME" ]; then
+                  echo "Deleting old workflow: $name"
+                  kubectl delete wf "$name"
+                fi
+              done
