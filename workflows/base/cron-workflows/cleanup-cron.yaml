@@ -44,6 +44,7 @@ spec:
                 fi
               done
               echo "Cleanup process finished."
-              curl -X POST -H 'Content-type: application/json' \
-              --data "{\"text\":\" Clean up fertig!: $(date)\"}" \
-              $SLACK_WEBHOOK_URL
+              wget --post-data="{\"text\":\"🧹 Clean up fertig!: $(date)\"}" \
+                   --header="Content-Type: application/json" \
+                   --quiet --output-document=- \
+                   $SLACK_WEBHOOK_URL
