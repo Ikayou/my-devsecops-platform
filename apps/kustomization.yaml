@@ -4,12 +4,12 @@ kind: Kustomization
 
 # Hier werden die Unterverzeichnisse aufgelistet, die jeweils eine eigene kustomization.yaml haben.
 resources:
-  - keycloak
-  - loki
-  - falco
-  - prometheus
-  - argo-workflows
-  - trivy
+  - keycloak/
+  - loki/
+  - falco/
+  - prometheus/
+  - argo-workflows/
+  - trivy/
 
 # Gemeinsame Labels für die gesamte Plattform
 commonLabels:

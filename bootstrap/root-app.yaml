@@ -8,8 +8,10 @@ spec:
   source:
     repoURL: https://github.com/Ikayou/my-devsecops-platform.git
     targetRevision: HEAD
-    path: apps           # Alle Apps Durchführung
-    
+    path: apps
+    kustomize:
+      commonLabels:
+        platform: devsecops    
   destination:
     server: "https://kubernetes.default.svc"
     namespace: argocd
