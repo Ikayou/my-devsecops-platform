@@ -1,0 +1,17 @@
+# apps/keycloak/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Auflistung aller Kubernetes-Manifeste in diesem Verzeichnis
+resources:
+  - falco.yaml
+  - network-policy.yaml
+
+# Gemeinsame Labels, die automatisch allen Ressourcen hinzugefügt werden
+# Dies ist nützlich für das Tracking innerhalb des Clusters
+commonLabels:
+  variant: development
+  managed-by: kustomize
+
+# Optional: Gemeinsames Namenspräfix für alle Ressourcen
+# namePrefix: dev-
