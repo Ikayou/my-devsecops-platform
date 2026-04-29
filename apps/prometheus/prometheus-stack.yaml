@@ -11,6 +11,9 @@ spec:
     targetRevision: 61.3.3
     helm:
       values: |
+        prometheusOperator:
+        admissionWebhooks:
+          enabled: false
         grafana:
           service:
             type: NodePort

@@ -15,11 +15,11 @@ spec:
     server: "https://kubernetes.default.svc"
     namespace: argocd
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+    #automated:
+      #prune: true
+      #selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true  
-      - RespectIgnoreDifferences=true
-      - Validate=false
+      #- ServerSideApply=true  
+      #- RespectIgnoreDifferences=true
+      #- Validate=false
