@@ -22,21 +22,22 @@ spec:
             install:
               enabled: true
             follow:
-              enabled: false
+              enabled: true   
 
         falco:
-          privileged: true
+          privileged: false   
           json_output: true
           stdout_output:
             enabled: true
           http_output:
             enabled: true
-            url: "http://falco-falcosidekick:2801/"
+            url: "http://{{ .Release.Name }}-falcosidekick:2801/" 
 
         falcosidekick:
           enabled: true
           webui:
             enabled: true
+            user: "admin:changeme"  
 
   destination:
     server: https://kubernetes.default.svc
