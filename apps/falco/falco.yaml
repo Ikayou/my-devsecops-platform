@@ -11,25 +11,35 @@ spec:
     targetRevision: 4.0.0
     helm:
       values: |
+        # -- Treiber: Modern eBPF (Empfohlen für WSL2)
         driver:
           kind: modern_ebpf
-          enabled: true
-          loader:
-            enabled: false
+          enabled: false
 
+        # -- Erstmalige Installation der Regeln (Follow deaktiviert für Stabilität)
+        falcoctl:
+          artifact:
+            install:
+              enabled: true
+            follow:
+              enabled: false
+
+        # -- Hauptkonfiguration
         falco:
           privileged: true
-          tty: true
+          # Aktiviert die Ereignisquelle (Wichtig!)
+          event_sources:
+            syscall:
+              enabled: true
+          
           json_output: true
           stdout_output:
             enabled: true
-            syscall_event_drops:
-              actions:
-                - log
           http_output:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
 
+        # -- Sidekick
         falcosidekick:
           enabled: true
           webui:
