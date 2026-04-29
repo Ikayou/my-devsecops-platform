@@ -10,6 +10,7 @@ resources:
   - prometheus/
   - argo-workflows/
   - trivy/
+  - fluent-bit/
 
 # Gemeinsame Labels für die gesamte Plattform
 commonLabels:
