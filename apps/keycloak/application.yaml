@@ -13,7 +13,12 @@ spec:
       values: |
         auth:
           adminUser: admin
-          adminPassword: "password123"
+          extraEnvVars:
+          - name: KEYCLOAK_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-creds
+                key: password
 
         image:
           registry: docker.io

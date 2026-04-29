@@ -13,6 +13,6 @@ resources:
 #secretGenerator:
   #- name: keycloak-creds
     #literals:
-      #- username=admin
-      #- password=password123
+      #- username=
+      #- password=
     #namespace: keycloak
