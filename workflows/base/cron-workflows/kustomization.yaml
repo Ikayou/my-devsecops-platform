@@ -7,3 +7,4 @@ resources:
   - system-health-check.yaml
   - trivy-security-audit.yaml
   - user-security-audit.yaml
+  - cleanup-cron.yaml
