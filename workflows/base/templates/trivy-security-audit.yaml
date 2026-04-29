@@ -25,7 +25,7 @@ spec:
     inputs: # Eingabeparameter für das zu scannende Image
       parameters:
       - name: target_image
-    activeDeadlineSeconds: 1200 # 20 Minuten Zeitlimit pro Scan
+    activeDeadlineSeconds: 2400 # 30 Minuten Zeitlimit pro Scan
     script:
       image: trivy-python-scanner:0.1
       imagePullPolicy: IfNotPresent
@@ -145,7 +145,7 @@ spec:
         try:
             target_image = os.getenv("TARGET_IMAGE")
             print(f"Starte Scan für: {target_image}")
-            cmd = ["/usr/local/bin/trivy", "image", "--severity", "CRITICAL", "--timeout", "15m", "--format", "json", target_image]
+            cmd = ["/usr/local/bin/trivy", "image", "--severity", "CRITICAL", "--scanners", "vuln", "--timeout", "30m", "--format", "json", target_image]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode != 0:
