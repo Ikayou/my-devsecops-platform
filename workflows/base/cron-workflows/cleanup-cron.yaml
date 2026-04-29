@@ -12,39 +12,44 @@ spec:
     entrypoint: cleanup-pods
     templates:
       - name: cleanup-pods
+        steps:
+          - - name: run-cleanup
+              template: cleanup-op
+          - - name: send-slack
+              template: slack-notif
+
+      - name: cleanup-op
         container:
           image: bitnami/kubectl:latest
           command: ["/bin/sh", "-c"]
+          args:
+            - |
+              TARGET_TIME=$(date -d '1 minute ago' +%s)
+              echo "Checking for workflows older than $(date -d @$TARGET_TIME)"
+              kubectl get wf -l "workflows.argoproj.io/completed=true" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.creationTimestamp}{"\n"}{end}' | \
+              while read name time; do
+                if [ -z "$name" ]; then continue; fi
+                wf_time=$(date -d "$time" +%s)
+                if [ "$wf_time" -lt "$TARGET_TIME" ]; then
+                  echo "Deleting old workflow: $name"
+                  kubectl delete wf "$name"
+                fi
+              done
+              echo "Cleanup process finished."
+
+      - name: slack-notif
+        container:
+          image: curlimages/curl:latest 
           env:
             - name: SLACK_WEBHOOK_URL
               valueFrom:
                 secretKeyRef:
                   name: slack-api
                   key: webhook-url
-          # Vor 24h werden pods die nicht benutzt werden automatisch gelöscht.
-          args:
+          command: ["/bin/sh", "-c"]
+          
+          args: 
             - |
-              
-              TARGET_TIME=$(date -d '1 minute ago' +%s)
-              
-              echo "Checking for workflows older than $(date -d @$TARGET_TIME)"
-
-              
-              kubectl get wf -l "workflows.argoproj.io/completed=true" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.creationTimestamp}{"\n"}{end}' | \
-              while read name time; do
-                if [ -z "$name" ]; then continue; fi
-
-                
-                wf_time=$(date -d "$time" +%s)
-                
-                
-                if [ "$wf_time" -lt "$TARGET_TIME" ]; then
-                  echo "Deleting old workflow: $name (created at $time)"
-                  kubectl delete wf "$name"
-                fi
-              done
-              echo "Cleanup process finished."
-              wget --post-data="{\"text\":\"🧹 Clean up fertig!: $(date)\"}" \
-                   --header="Content-Type: application/json" \
-                   --quiet --output-document=- \
-                   $SLACK_WEBHOOK_URL
+              curl -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"🧹 Clean up fertig!: $(date)\"}" \
+              $SLACK_WEBHOOK_URL
