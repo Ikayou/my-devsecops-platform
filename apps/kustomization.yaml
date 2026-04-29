@@ -1,0 +1,17 @@
+# apps/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Hier werden die Unterverzeichnisse aufgelistet, die jeweils eine eigene kustomization.yaml haben.
+resources:
+  - keycloak
+  - loki
+  - falco
+  - prometheus
+  - argo-workflows
+  - trivy
+
+# Gemeinsame Labels für die gesamte Plattform
+commonLabels:
+  variant: development
+  managed-by: kustomize
