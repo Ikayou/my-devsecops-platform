@@ -10,6 +10,7 @@ Ziel ist es, typische DevOps- und Security-Tools in einer Umgebung zu integriere
 Die Plattform basiert auf einer Kubernetes-Umgebung und integriert mehrere Tools aus den Bereichen Deployment, Monitoring und Security:
 
 - **Kubernetes**: Lokales Cluster (Docker Desktop / Kind)
+- **GitHub Actions**: CI-Pipeline für automatisiertes Security Scanning und Quality Gates
 - **Argo CD**: GitOps-basiertes Deployment und Synchronisation
 - **Helm**: Paketmanagement für Kubernetes-Applikationen
 - **Prometheus & Grafana**: Monitoring, Metriken und Visualisierung
@@ -21,6 +22,14 @@ Die Plattform basiert auf einer Kubernetes-Umgebung und integriert mehrere Tools
 ---
 
 ## Funktionen
+
+### CI/CD-Integration & Shift-Left Security
+- **Automatisierte CI-Pipeline**: 
+  Implementierung von GitHub Actions zur automatischen Validierung von Code-Änderungen. Die Pipeline wird bei jedem Push oder Pull Request getriggert, um Sicherheitsstandards bereits in der Entwicklungsphase zu erzwingen.
+- **Vulnerability Scanning as a Service**:
+  Integration von Trivy in den GitHub-Workflow. Container-Images werden vor dem Deployment gescannt, wobei die Pipeline bei Funden von CRITICAL oder HIGH Schwachstellen automatisch stoppt (Security Gate).
+- **Sichtbarkeit durch Security Dashboards**:
+  Konfiguration des Exports von Scan-Ergebnissen im SARIF-Format (Static Analysis Results Interchange Format). Dies ermöglicht die Visualisierung von Schwachstellen direkt im GitHub "Security"-Tab inklusive detaillierter Korrekturanweisungen und CVE-Verweise.
 
 ### Security Integration & Vulnerability Management
 - **Intelligentes Jira-Ticket-System**: 
@@ -59,6 +68,7 @@ Die operationalen Tasks sind als CronWorkflows konfiguriert:
 ---
 
 ## Lernziele & Kenntnisse
+- **GitHub Actions & CI/CD**: Aufbau automatisierter Workflows zur Durchsetzung von Security-Policies und Integration von SARIF-Reports in das GitHub-Ökosystem.
 - **Incident Management Automatisierung**: Integration von Security-Scannern in Enterprise-Ticketing-Systeme (Jira).
 - **API-Programmierung**: Entwicklung von Python-Logik zur Interaktion mit REST-Schnittstellen unter Berücksichtigung von Authentifizierung (Basic Auth / Tokens).
 - **Datenkonsistenz**: Implementierung von Suchlogiken zur Vermeidung von Daten-Duplikaten in automatisierten Pipelines.
