@@ -40,7 +40,7 @@ spec:
 
       - name: slack-notif
         container:
-          image: curlimages/curl:latest 
+          image: curlimages/curl:latest
           env:
             - name: SLACK_WEBHOOK_URL
               valueFrom:
@@ -48,9 +48,11 @@ spec:
                   name: slack-api
                   key: webhook-url
           command: ["/bin/sh", "-c"]
-          
           args: 
             - |
+          
+              NOW=$(date '+%Y-%m-%d %H:%M:%S')
+          
               curl -X POST -H 'Content-type: application/json' \
-              --data "{\"text\":\"🧹 Clean up fertig!: $(date)\"}" \
-              $SLACK_WEBHOOK_URL
+              --data "{\"text\":\"🧹 Clean up fertig! (Zeit: $NOW)\"}" \
+              "$SLACK_WEBHOOK_URL"
