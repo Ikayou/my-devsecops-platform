@@ -37,7 +37,7 @@ spec:
         valueFrom:
           secretKeyRef:
             name: slack-creds
-            key: webhook-url
+            key: webhook-url #key-name & secret müssen angepasst werden.
       - name: JIRA_URL
         valueFrom:
           secretKeyRef:
