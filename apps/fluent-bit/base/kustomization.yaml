@@ -1,0 +1,7 @@
+# apps/keycloak/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Auflistung aller Kubernetes-Manifeste in diesem Verzeichnis
+resources:
+  - fluent-bit.yaml

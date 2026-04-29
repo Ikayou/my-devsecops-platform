@@ -1,0 +1,19 @@
+# apps/keycloak/network-policy.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: keycloak-policy
+  namespace: keycloak
+spec:
+  podSelector:
+    matchLabels:
+      app: keycloak
+  policyTypes:
+  - Ingress
+  ingress:
+  # Erlaubt nur Datenverkehr von Ingress-Controllern
+  # Ermöglicht eine sichere Kommunikation innerhalb des Clusters
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
