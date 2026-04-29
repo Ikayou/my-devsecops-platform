@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: daily-cleanup
+  namespace: argo
+spec:
+  schedule: "0 0 * * *" # 0 Uhr
+  concurrencyPolicy: Replace
+  startingDeadlineSeconds: 0
+  workflowSpec:
+    serviceAccountName: cleanup-sa 
+    entrypoint: cleanup-pods
+    templates:
+      - name: cleanup-pods
+        container:
+          image: bitnami/kubectl:latest
+          command: ["/bin/sh", "-c"]
+          # Vor 24h werden pods die nicht benutzt werden automatisch gelöscht.
+          args:
+            - |
+              kubectl delete wf -l "workflows.argoproj.io/completed=true" --field-selector="metadata.creationTimestamp<$(date -d '24 hours ago' -u +%Y-%m-%dT%H:%M:%SZ)"
