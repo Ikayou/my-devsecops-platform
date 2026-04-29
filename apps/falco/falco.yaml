@@ -11,12 +11,12 @@ spec:
     targetRevision: 4.0.0
     helm:
       values: |
-        # -- Treiber: Modern eBPF (Empfohlen für WSL2)
+        # -- Treiber-Konfiguration
         driver:
           kind: modern_ebpf
           enabled: false
 
-        # -- Erstmalige Installation der Regeln (Follow deaktiviert für Stabilität)
+        # -- Falcoctl: Regeln laden
         falcoctl:
           artifact:
             install:
@@ -24,14 +24,20 @@ spec:
             follow:
               enabled: false
 
-        # -- Hauptkonfiguration
+        # -- Hauptkonfiguration (Korrektur für "Must enable at least one event source")
         falco:
           privileged: true
-          # Aktiviert die Ereignisquelle (Wichtig!)
-          event_sources:
-            syscall:
+          
+          # 1. Erzwinge die syscall-Quelle auf Service-Ebene
+          services:
+            - name: syscall
               enabled: true
           
+          # 2. Explizite Aktivierung der modern_ebpf Engine
+          engine:
+            kind: modern_ebpf
+          
+          # 3. Standard-Einstellungen beibehalten
           json_output: true
           stdout_output:
             enabled: true
@@ -39,7 +45,7 @@ spec:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
 
-        # -- Sidekick
+        # -- Falcosidekick
         falcosidekick:
           enabled: true
           webui:
