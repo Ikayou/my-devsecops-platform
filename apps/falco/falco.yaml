@@ -12,10 +12,10 @@ spec:
     helm:
       values: |
         driver:
-          kind: modern_ebpf
+          kind: ebpf
           enabled: true
           loader:
-            enabled: false
+            enabled: true
 
         falcoctl:
           artifact:
