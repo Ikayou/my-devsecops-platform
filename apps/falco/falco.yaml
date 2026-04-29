@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://falcosecurity.github.io/charts
     chart: falco
-    targetRevision: 4.0.0
+    targetRevision: 3.0.0
     helm:
       values: |
         driver:
@@ -25,6 +25,7 @@ spec:
               enabled: false
 
         falco:
+          log_level: debug
           privileged: true
           json_output: true
           stdout_output:
@@ -32,6 +33,11 @@ spec:
           http_output:
             enabled: true
             url: "http://falco-falcosidekick:2801/"
+          mounts:
+            hostRoot: true
+          env:
+            - name: FALCO_BPF_PROBE
+              value: "" 
 
         falcosidekick:
           enabled: true
