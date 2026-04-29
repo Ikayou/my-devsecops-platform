@@ -5,7 +5,7 @@ kind: Kustomization
 # Auflistung aller Kubernetes-Manifeste in diesem Verzeichnis
 resources:
   - application.yaml
-  - network-policy.yaml
+  - argo-workflows-app.yaml
 
 # Gemeinsame Labels, die automatisch allen Ressourcen hinzugefügt werden
 # Dies ist nützlich für das Tracking innerhalb des Clusters
