@@ -11,24 +11,13 @@ spec:
     targetRevision: 3.0.0
     helm:
       values: |
-        # -- Treiber-Konfiguration: Wir MÜSSEN 'modern_ebpf' erzwingen
+        # -- Global: Treiber-Einstellungen
+        # Wir deaktivieren den Driver-Loader komplett, da Modern eBPF ihn nicht benötigt.
         driver:
-          enabled: true
+          enabled: false     # Erzwingt das Deaktivieren des fehlerhaften Init-Containers
           kind: modern_ebpf
 
-        # -- WICHTIG: Kernel-Modul explizit deaktivieren, damit er nicht danach sucht
-        falco:
-          privileged: true
-          # Hier stellen wir sicher, dass er die syscall-Quelle nutzt
-          event_sources:
-            syscall:
-              enabled: true
-          
-          # Modern eBPF spezifische Einstellungen
-          ebpf:
-            enabled: true # In Version 0.34.0 oft nötig als Schalter
-
-        # -- Die restlichen Einstellungen bleiben gleich
+        # -- Falcoctl: Regel-Management
         falcoctl:
           artifact:
             install:
@@ -36,6 +25,26 @@ spec:
             follow:
               enabled: false
 
+        # -- Haupt-Konfiguration
+        falco:
+          privileged: true
+          # Aktiviert die modern_ebpf Engine direkt in der Falco-Konfiguration
+          ebpf:
+            enabled: true
+          
+          # Sicherstellen, dass syscalls überwacht werden
+          event_sources:
+            syscall:
+              enabled: true
+
+          json_output: true
+          stdout_output:
+            enabled: true
+          http_output:
+            enabled: true
+            url: "http://falco-falcosidekick:2801/"
+
+        # -- Sidekick Integration
         falcosidekick:
           enabled: true
           webui:
