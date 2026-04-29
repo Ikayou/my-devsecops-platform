@@ -12,7 +12,7 @@ spec:
     helm:
       values: |
         driver:
-          kind: auto
+          kind: ebpf
           enabled: true
           loader:
             enabled: true
