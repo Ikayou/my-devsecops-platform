@@ -15,6 +15,12 @@ spec:
         container:
           image: bitnami/kubectl:latest
           command: ["/bin/sh", "-c"]
+          env:
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: slack-api
+                  key: webhook-url
           # Vor 24h werden pods die nicht benutzt werden automatisch gelöscht.
           args:
             - |
@@ -38,3 +44,6 @@ spec:
                 fi
               done
               echo "Cleanup process finished."
+              curl -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\" Clean up fertig!: $(date)\"}" \
+              $SLACK_WEBHOOK_URL
