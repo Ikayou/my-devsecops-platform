@@ -15,7 +15,15 @@ Dieses Projekt zeigt den Aufbau einer modernen Infrastruktur, die Sicherheit und
 
 ### 2. Security & Incident Management
 *   **Automatisierte Scans**: Ein spezialisierter **Trivy-Scanner** (basiert auf Python 3.9-slim) prüft die Applikationen regelmäßig auf Schwachstellen.
+
+![ArgoWorkflows](bilder/ArgoWorkflows.png)
+
 *   **Smart Ticketing**: Findet der Scanner kritische Fehler, prüft ein Skript automatisch in **Jira**, ob das Problem bekannt ist. Falls nicht, wird ein Ticket erstellt und eine **Slack-Warnung** gesendet.
+
+![Jira](bilder/Jira-Ticket.png)
+
+![Slack](bilder/slack.png)
+
 *   **Compliance-Check**: Ein Workflow prüft in **Keycloak**, ob alle Benutzer die Multi-Faktor-Authentifizierung (MFA) aktiviert haben.
 
 ### 3. Monitoring & Plattform-Betrieb
