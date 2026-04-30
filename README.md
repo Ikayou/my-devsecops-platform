@@ -4,6 +4,37 @@
 ## Übersicht
 Dieses Projekt zeigt den Aufbau einer modernen Infrastruktur, die Sicherheit und Betrieb (Ops) direkt verbindet. Das Ziel ist ein vollständig automatisierter Prozess – von der Code-Änderung bis zur Überwachung im laufenden Betrieb.
 
+```text
+my-devsecops-platform/
+├── .github/                    # CI/CD Konfiguration
+│   └── trivy-scan.yaml         # GitHub Action für automatisiertes Security Scanning
+├── apps/                       # Infrastruktur-Komponenten (GitOps-Apps)
+│   ├── keycloak/               # Identity & Access Management (IAM)
+│   │   ├── base/               # Grundkonfiguration (App-Definition, Network Policies)
+│   │   └── overlays/           # Umgebungsspezifische Anpassungen
+│   │       └── dev/            # Dev-Umgebung inkl. verschlüsselter Slack-Anbindung
+│   ├── argo-workflows/         # Engine für die Workflow-Automatisierung
+│   ├── falco/                  # Runtime Security & Bedrohungserkennung
+│   ├── fluent-bit/             # Log-Shipper für die Datensammlung
+│   ├── loki/                   # Log-Aggregationssystem (Teil des PLG-Stacks)
+│   ├── prometheus/             # Monitoring- & Alerting-System
+│   └── trivy/                  # Kubernetes-Operator für In-Cluster Scans
+├── bootstrap/                  # Einstiegspunkt für GitOps
+│   └── root-app.yaml           # "App-of-Apps" zur automatischen Cluster-Initialisierung
+├── workflows/                  # Operative Automatisierung (Argo Workflows)
+│   ├── base/                   # Gemeinsame Vorlagen und RBAC-Berechtigungen
+│   │   ├── cron-workflows/     # Zeitgesteuerte Aufgaben (Cleanup, Audits)
+│   │   └── template/           # Wiederverwendbare Workflow-Bausteine
+│   └── overlay/                # Umgebungsspezifische Parameter & Secrets
+│       └── sealed-slack-secret.yaml # Verschlüsselte Webhooks für Statusmeldungen
+├── images/                     # Custom Docker-Engineering
+│   └── trivy-scanner/          # Eigener Python-basierter Security-Scanner
+│       └── Dockerfile          # Bauplan für das Custom Scan-Image
+├── bilder/                     # Speicherort für Screenshots der Dokumentation
+└── README.md                   # Zentrale Dokumentation der Plattform
+
+```
+
 ## Kern-Funktionen
 
 ### 1. GitOps & Automatisierung
