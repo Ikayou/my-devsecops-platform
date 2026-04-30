@@ -78,39 +78,39 @@ spec:
             requests.post(slack_url, json={"text": msg})
 
         def jira_issue_exists(cve_id, img):
-            jira_url = os.getenv("JIRA_URL")
+            jira_url = os.getenv("JIRA_URL").rstrip('/') # sicherstellen, dass die URL keinen abschließenden Slash hat
             user = os.getenv("JIRA_USER")
             token = os.getenv("JIRA_TOKEN")
             project_key = os.getenv("JIRA_PROJECT")
 
-            
+            # JQL abfrage so gestalten, dass sie sowohl die CVE-ID als auch das Image berücksichtigt, um Duplikate zu vermeiden
             jql = f'project = "{project_key}" AND summary ~ "{cve_id}" AND summary ~ "{img}"'
-            
+
             try:
+                # endpoint url richtig zusammensetzen 
                 res = requests.get(
-                    f"{jira_url}/rest/api/3/search", 
-                    params={"jql": jql, "fields": "summary", "maxResults": 5},
+                    f"{jira_url}/rest/api/3/search",
+                    params={"jql": jql, "maxResults": 5},
                     auth=HTTPBasicAuth(user, token),
                     timeout=30
                 )
-                
+
                 if res.status_code != 200:
-                    print(f"Jira Suche Fehler: {res.status_code}")
-                    return False
+                    
+                    print(f"Jira Suche Fehler: {res.status_code} (URL: {res.url})")
+                    return True 
 
                 data = res.json()
-                issues = data.get("issues", [])
-                
-                # Durchsuche die gefundenen Issues nach einer genauen Übereinstimmung von CVE-ID und Image im Titel
-                for issue in issues:
+                # ob die Antwort tatsächlich Issues enthält, bevor wir darauf zugreifen
+                for issue in data.get("issues", []):
                     summary = issue.get("fields", {}).get("summary", "")
                     if cve_id in summary and img in summary:
-                        return True # Ticket existiert bereits
-                        
+                        return True
+                
                 return False
             except Exception as e:
-                print(f"Fehler bei Jira-Abfrage: {e}")
-                return False
+                print(f"Jira Connection Error: {e}")
+                return True # error occurs, assume issue exists to prevent duplicates
 
         def create_jira_issue(v, img):
             jira_url, user, token, project_key = os.getenv("JIRA_URL"), os.getenv("JIRA_USER"), os.getenv("JIRA_TOKEN"), os.getenv("JIRA_PROJECT")
