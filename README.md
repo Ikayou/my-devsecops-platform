@@ -9,33 +9,18 @@ Ziel ist es, typische DevOps- und Security-Tools in einer Umgebung zu integriere
 ## Architektur
 Die Plattform basiert auf einer Kubernetes-Umgebung und integriert mehrere Tools aus den Bereichen Deployment, Monitoring und Security:
 
-```mermaid
-flowchart LR
+- **Kubernetes**: Lokales Cluster (Docker Desktop / Kind)
+- **GitHub Actions**: CI-Pipeline für automatisiertes Security Scanning und Quality Gates
+- **Argo CD**: GitOps-basiertes Deployment und Synchronisation
+- **Kustomize**: Konfigurationsmanagement durch Base- und Overlay-Strukturen zur Trennung von Umgebungen
+- **Sealed Secrets**: Asymmetrische Verschlüsselung von Secrets zur sicheren Speicherung im Git-Repository
+- **Helm**: Paketmanagement für Kubernetes-Applikationen
+- **Prometheus & Grafana**: Monitoring, Metriken und Visualisierung
+- **Falco & Trivy**: Runtime Security und Vulnerability Scanning
+- **Keycloak**: Identity & Access Management (IAM)
+- **Argo Workflows**: Automatisierung von operationalen Abläufen und Audits
+- **Jira Cloud & Slack**: Zentrales Incident-Management und Echtzeit-Monitoring
 
-    Dev[Developer] -->|Push / PR| GitHub
-    GitHub -->|CI Pipeline| Actions[GitHub Actions]
-    Actions -->|Security Scan| TrivyCI[Trivy Scan]
-    TrivyCI -->|Findings| GitHubSecurity[GitHub Security Tab]
-
-    GitHub -->|GitOps Sync| ArgoCD[Argo CD]
-
-    ArgoCD --> K8s[Kubernetes Cluster]
-
-    subgraph Cluster
-        K8s --> App[Applications]
-        K8s --> Keycloak[Keycloak]
-        K8s --> Falco[Falco Runtime Security]
-        K8s --> TrivyOp[Trivy Operator]
-        K8s --> Prometheus[Prometheus]
-        Prometheus --> Grafana[Grafana]
-
-        ArgoWF[Argo Workflows]
-    end
-
-    TrivyOp -->|Vulnerabilities| Jira[Jira]
-    Jira --> Slack[Slack Notification]
-
-    ArgoWF -->|Automation| Slack
 ---
 
 ## Funktionen
