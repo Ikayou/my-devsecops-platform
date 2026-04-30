@@ -59,6 +59,9 @@ my-devsecops-platform/
 
 ### 3. Monitoring & Plattform-Betrieb
 *   **Echtzeit-Überwachung**: Mit **Prometheus, Grafana, Loki und Falco** werden Metriken, Logs und Sicherheits-Events zentral visualisiert.
+
+![Grafana](bilder/Grafana.png)
+
 *   **Verfügbarkeit**: Ein **SSL-Monitor** prüft die Gültigkeit von Zertifikaten und meldet Ablaufdaten proaktiv an Slack.
 *   **Self-Healing**: Ein Workflow erkennt abgestürzte Pods sofort. Zudem bereinigt ein automatischer **Cleanup-Workflow** täglich alte Daten, um Ressourcen zu sparen.
 
