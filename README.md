@@ -2,7 +2,14 @@
 **Automatisierung von Deployment, Security und Monitoring**
 
 ## Übersicht
-Dieses Projekt zeigt den Aufbau einer modernen Infrastruktur, die Sicherheit und Betrieb (Ops) direkt verbindet. Das Ziel ist ein vollständig automatisierter Prozess – von der Code-Änderung bis zur Überwachung im laufenden Betrieb.
+Eine vollständige lokale DevSecOps-Plattform mit automatisierter Security,
+CI/CD, GitOps und Incident-Management (Jira + Slack Integration).
+
+## Architektur
+
+![architektur](bilder/devops.png)
+
+## Projektstruktur
 
 ```text
 my-devsecops-platform/
