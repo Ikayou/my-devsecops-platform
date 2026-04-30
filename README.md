@@ -14,7 +14,8 @@ CI/CD, GitOps und Incident-Management (Jira + Slack Integration).
 ```text
 my-devsecops-platform/
 ├── .github/                    # CI/CD Konfiguration
-│   └── trivy-scan.yaml         # GitHub Action für automatisiertes Security Scanning
+│   └── workflows/
+|       └── trivy-scan.yaml     # GitHub Action für automatisiertes Security Scanning
 ├── apps/                       # Infrastruktur-Komponenten (GitOps-Apps)
 │   ├── keycloak/               # Identity & Access Management (IAM)
 │   │   ├── base/               # Grundkonfiguration (App-Definition, Network Policies)
