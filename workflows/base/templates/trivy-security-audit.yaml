@@ -83,21 +83,34 @@ spec:
             token = os.getenv("JIRA_TOKEN")
             project_key = os.getenv("JIRA_PROJECT")
 
+            
             jql = f'project = "{project_key}" AND summary ~ "{cve_id}" AND summary ~ "{img}"'
+            
+            try:
+                res = requests.get(
+                    f"{jira_url}/rest/api/3/search", 
+                    params={"jql": jql, "fields": "summary", "maxResults": 5},
+                    auth=HTTPBasicAuth(user, token),
+                    timeout=30
+                )
+                
+                if res.status_code != 200:
+                    print(f"Jira Suche Fehler: {res.status_code}")
+                    return False
 
-            res = requests.get(
-                f"{jira_url}/rest/api/3/search/jql",
-                params={"jql": jql, "maxResults": 1},
-                auth=HTTPBasicAuth(user, token)
-            )
-
-            if res.status_code != 200:
-                print(f"Jira Suche Fehler: {res.status_code}")
-                print(res.text)
+                data = res.json()
+                issues = data.get("issues", [])
+                
+                # Durchsuche die gefundenen Issues nach einer genauen Übereinstimmung von CVE-ID und Image im Titel
+                for issue in issues:
+                    summary = issue.get("fields", {}).get("summary", "")
+                    if cve_id in summary and img in summary:
+                        return True # Ticket existiert bereits
+                        
                 return False
-
-            data = res.json()
-            return data.get("total", 0) > 0
+            except Exception as e:
+                print(f"Fehler bei Jira-Abfrage: {e}")
+                return False
 
         def create_jira_issue(v, img):
             jira_url, user, token, project_key = os.getenv("JIRA_URL"), os.getenv("JIRA_USER"), os.getenv("JIRA_TOKEN"), os.getenv("JIRA_PROJECT")
