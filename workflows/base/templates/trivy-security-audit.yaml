@@ -78,19 +78,17 @@ spec:
             requests.post(slack_url, json={"text": msg})
 
         def jira_issue_exists(cve_id, img):
-            # 1. URL und Authentifizierungsdaten aus Umgebungsvariablen holen
             jira_url = os.getenv("JIRA_URL").strip().rstrip('/')
             user = os.getenv("JIRA_USER")
             token = os.getenv("JIRA_TOKEN")
             project_key = os.getenv("JIRA_PROJECT")
 
-            # 2. API-Endpoint für die Suche nach Issues in Jira
-            search_url = f"{jira_url}/rest/api/3/search"
             
-            # 3. JQL
+            search_url = f"{jira_url}/rest/api/3/search/jql"
+            
+            
             jql = f'project = "{project_key}" AND summary ~ "{cve_id}" AND summary ~ "{img}"'
             
-            # 4. POST damit die JQL-Abfrage korrekt übermittelt wird
             payload = {
                 "jql": jql,
                 "maxResults": 5,
@@ -98,7 +96,7 @@ spec:
             }
 
             try:
-                # API v3  POST /rest/api/3/search 
+                
                 res = requests.post(
                     search_url,
                     json=payload,
@@ -108,15 +106,13 @@ spec:
                 )
 
                 if res.status_code != 200:
-                    # 410 Fehler: API-Endpoint nicht gefunden (z.B. falsche URL oder falscher Pfad)
+                    
                     print(f"Jira API Fehler: {res.status_code} - URL: {search_url}")
-                    print(f"Response: {res.text}")
-                    return True # Doppeltes Ticket vermeiden bei API-Fehlern
+                    return True 
 
                 data = res.json()
                 issues = data.get("issues", [])
                 
-                # Title CVE ID und Image-Name enthalten, um Duplikate zu erkennen
                 for issue in issues:
                     summary = issue.get("fields", {}).get("summary", "")
                     if cve_id in summary and img in summary:
@@ -125,7 +121,7 @@ spec:
                 return False
             except Exception as e:
                 print(f"Verbindungsfehler: {e}")
-                return True # Error handling: Sicherheitsmaßnahme, um doppelte Tickets zu vermeiden
+                return True
 
         def create_jira_issue(v, img):
             jira_url, user, token, project_key = os.getenv("JIRA_URL"), os.getenv("JIRA_USER"), os.getenv("JIRA_TOKEN"), os.getenv("JIRA_PROJECT")
