@@ -2,12 +2,23 @@
 **Automatisierung von Deployment, Security und Monitoring**
 
 ## Übersicht
-Eine vollständige lokale DevSecOps-Plattform mit automatisierter Security,
-CI/CD, GitOps und Incident-Management (Jira + Slack Integration).
+Eine vollständige DevSecOps-Plattform mit:
+
+- CI/CD (GitHub Actions + ArgoCD)
+- Security Scanning (Trivy)
+- Automatisiertem Incident Management (Jira + Slack)
+- Kubernetes-basierter Infrastruktur
 
 ## Architektur
 
 ![architektur](bilder/devops.png)
+
+## Demo
+
+- Trivy Scan erkennt CVEs automatisch
+- Jira Tickets werden bei kritischen Findings erstellt
+- Slack Benachrichtigung bei Security Events
+- ArgoCD synchronisiert alle Deployments automatisch
 
 ## Projektstruktur
 
