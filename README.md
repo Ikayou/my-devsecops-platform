@@ -1,88 +1,69 @@
-# My DevSecOps Platform
+---
 
-## Übersicht
-Dieses Projekt zeigt den Aufbau einer lokalen DevSecOps-Plattform auf Basis von Kubernetes.  
-Ziel ist es, typische DevOps- und Security-Tools in einer Umgebung zu integrieren und praktisch anzuwenden.
+#  Cloud-Native DevSecOps Platform
+**Automatisierte Infrastructure, Security & Observability**
+
+##  Projektziel
+Dieses Projekt bildet eine produktionsnahe DevSecOps-Umgebung ab. Der Fokus liegt auf einem **vollautomatisierten Lifecycle**, der Sicherheit und Betrieb effizient verbindet:
+*   **GitOps**: Konsistente Infrastruktur durch Argo CD als Single Source of Truth.
+*   **Shift-Left Security**: Frühzeitige Identifikation von Schwachstellen im Entwicklungsprozess.
+*   **Automated Ops**: Ersatz von Routineaufgaben durch intelligente Workflows.
 
 ---
 
-## Architektur
-Die Plattform basiert auf einer Kubernetes-Umgebung und integriert mehrere Tools aus den Bereichen Deployment, Monitoring und Security:
+##  Architektur & Technologie-Stack
 
-- **Kubernetes**: Lokales Cluster (Docker Desktop / Kind)
-- **GitHub Actions**: CI-Pipeline für automatisiertes Security Scanning und Quality Gates
-- **Argo CD**: GitOps-basiertes Deployment und Synchronisation
-- **Kustomize**: Konfigurationsmanagement durch Base- und Overlay-Strukturen zur Trennung von Umgebungen
-- **Sealed Secrets**: Asymmetrische Verschlüsselung von Secrets zur sicheren Speicherung im Git-Repository
-- **Helm**: Paketmanagement für Kubernetes-Applikationen
-- **Prometheus & Grafana**: Monitoring, Metriken und Visualisierung
-- **Falco & Trivy**: Runtime Security und Vulnerability Scanning
-- **Keycloak**: Identity & Access Management (IAM)
-- **Argo Workflows**: Automatisierung von operationalen Abläufen und Audits
-- **Jira Cloud & Slack**: Zentrales Incident-Management und Echtzeit-Monitoring
+Die Plattform nutzt den **App-of-Apps-Ansatz**. Über die zentrale **`bootstrap/root-app.yaml`** synchronisiert Argo CD den gesamten Cluster-Zustand automatisch mit dem GitHub-Repository. Jede Änderung im Git führt zu einem sofortigen Update im Cluster.
+
+### Core-Komponenten:
+*   **Deployment**: Argo CD, Helm, Kustomize.
+*   **Automation**: Argo Workflows (CronWorkflows & Templates).
+*   **Security**: Keycloak, Bitnami Sealed Secrets, Falco, Trivy.
+*   **Observability**: Prometheus, Grafana, Loki, Fluent-bit.
 
 ---
 
-## Funktionen
+##  Security & Automation Features
 
-### GitOps & Infrastructure as Code (IaC)
-- **Kustomize Overlay Management**: 
-  Implementierung einer modularen Konfigurationsstruktur durch Trennung von `base` und `overlays` (z. B. dev, production). Dies ermöglicht eine saubere Trennung der Konfigurationen und hohe Wiederverwendbarkeit nach dem DRY-Prinzip.
-- **Sicheres Secret-Management mit Sealed Secrets**: 
-  Integration von Bitnami Sealed Secrets zur Lösung des "Secrets-in-Git"-Problems. Sensible Daten werden asymmetrisch verschlüsselt im Repository gespeichert und erst innerhalb des Clusters durch den Controller dechiffriert.
+### 1. Schwachstellen-Management mit Jira & Slack
+Ich habe einen automatisierten Security-Scan via **Argo Workflows** implementiert:
+*   **Trivy-Scanner**: Ein spezialisiertes Python-Image scannt Apps wie Keycloak oder Falco.
+*   **Intelligentes Ticketing**: Ein Python-Skript prüft via JQL (Jira Query Language), ob für eine CVE bereits ein Ticket existiert. Falls nicht, wird automatisch ein **Jira-Ticket** erstellt und eine **Slack-Benachrichtigung** versendet.
+*   **CI-Integration**: GitHub Actions prüft Code bei jedem Push. Werden kritische Probleme gefunden, erfolgt das Update der Version direkt im Code.
 
-### CI/CD-Integration & Shift-Left Security
-- **Automatisierte CI-Pipeline**: 
-  Implementierung von GitHub Actions zur automatischen Validierung von Code-Änderungen. Die Pipeline wird bei jedem Push oder Pull Request getriggert, um Sicherheitsstandards bereits in der Entwicklungsphase zu erzwingen.
-- **Vulnerability Scanning as a Service**:
-  Integration von Trivy in den GitHub-Workflow. Container-Images werden vor dem Deployment gescannt, wobei die Pipeline bei Funden von CRITICAL oder HIGH Schwachstellen automatisch stoppt (Security Gate).
-- **Sichtbarkeit durch Security Dashboards**:
-  Konfiguration des Exports von Scan-Ergebnissen im SARIF-Format (Static Analysis Results Interchange Format). Dies ermöglicht die Visualisierung von Schwachstellen direkt im GitHub "Security"-Tab inklusive detaillierter Korrekturanweisungen und CVE-Verweise.
+### 2. Keycloak Compliance Audit
+Ein dedizierter Workflow überwacht die Sicherheit der Identitätslösung:
+*   Die Keycloak API wird abgefragt, um User ohne **Multi-Faktor-Authentifizierung (MFA)** zu finden.
+*   Diese Sicherheitslücken werden direkt an Slack gemeldet.
 
-### Security Integration & Vulnerability Management
-- **Intelligentes Jira-Ticket-System**: 
-  Automatisierte Erstellung von Jira-Tasks bei Erkennung von KRITISCHEN Schwachstellen. Die Integration nutzt die Jira REST API v3 zur nahtlosen Übertragung von Sicherheitsbefunden in den Entwicklungs-Workflow.
-- **Idempotenz & Deduplizierung**:
-  Ein Python-basierter Logik-Layer prüft vor jeder Ticket-Erstellung via JQL (Jira Query Language), ob für eine spezifische CVE und ein spezifisches Image bereits ein offenes Ticket existiert. Dies verhindert redundante Benachrichtigungen und Ticket-Wildwuchs.
-- **Trivy-Laufzeit-Optimierung**:
-  Konfiguration von erweiterten Timeouts (15m) für die Analyse komplexer und großformatiger Images (z. B. Keycloak), um vollständige Scans auch bei tiefen Layer-Strukturen sicherzustellen.
-
-### Automated Operations & Maintenance
-- **Ressourcen-Optimierung durch Daily Cleanup**: 
-  Automatisierte Bereinigung abgeschlossener Argo Workflows zur Entlastung der Cluster-Ressourcen. Ein dedizierter CronWorkflow identifiziert und entfernt Workflows, die älter als 24 Stunden sind.
-- **Echtzeit-Benachrichtigung via Slack**: 
-  Integration eines Feedback-Kanals für operationale Aufgaben. Nach Abschluss der Bereinigungsprozesse sendet ein spezialisierter Container (`curlimages/curl`) Statusmeldungen inklusive Zeitstempel an einen definierten Slack-Channel.
+### 3. Monitoring & Self-Healing
+*   **Endpoint-Check**: Ein Monitor überwacht SSL-Zertifikate (z.B. Keycloak-URL) auf ihre Gültigkeit und meldet Ablaufdaten an Slack.
+*   **Pod-Health**: Ein Workflow erkennt abgestürzte Pods (`CrashLoopBackOff`) sofort und schlägt Alarm.
+*   **Auto-Cleanup**: Ein täglicher CronWorkflow löscht beendete Workflows und optimiert so die Cluster-Ressourcen.
 
 ---
 
-## Containerisierung
-Für die Ausführung der Security-Audits und Maintenance-Tasks wurden spezialisierte Images verwendet:
-- **Image**: `trivy-python-scanner:0.1`
-- **Inhalt**: 
-  - Basis: `python:3.9-slim` für minimale Angriffsfläche.
-  - Integration von `Trivy` (v0.48.1+) als binäre Komponente.
-  - Vorinstallierte Python-Libraries (`requests`) für die API-Kommunikation mit Jira und Slack.
-  - Optimiertes Shell-Parsing zur Vermeidung von Fehlinterpretationen bei multiplen Scan-Targets.
-- **Maintenance & Messaging**:
-  - `bitnami/kubectl` für API-Interaktionen innerhalb des Clusters.
-  - `curlimages/curl` für leichtgewichtige HTTP-Benachrichtigungen an Slack.
+##  Design-Entscheidungen
+
+### Kustomize-Struktur
+Die Konfiguration ist modular aufgebaut:
+*   **`base/`**: Enthält die Standard-Logik für CronWorkflows und Templates.
+*   **`overlays/dev/`**: Ermöglicht umgebungsspezifische Anpassungen. Die Struktur ist so vorbereitet, dass ein **`production`-Overlay** jederzeit nahtlos integriert werden kann.
+
+### Spezialisiertes Scanner-Image
+Das `trivy-python-scanner` Image basiert auf `python:3.9-slim`. Die Wahl fiel auf dieses Image, um die **Angriffsfläche minimal** zu halten und gleichzeitig die nötigen Bibliotheken (`requests`) für die Kommunikation mit der Jira- und Slack-API bereitzustellen.
+
+### Secret Management
+Sicherheit steht an erster Stelle: Alle Passwörter und API-Tokens sind via **Sealed Secrets** asymmetrisch verschlüsselt und können gefahrlos im Git-Repository gespeichert werden.
 
 ---
 
-## Automatisierung & Zeitsteuerung (CronWorkflows)
-Die operationalen Tasks sind als CronWorkflows konfiguriert (Timezone: Europe/Berlin):
-- **Daily Workflow Cleanup & Slack Notification**: Täglich um 00:00 Uhr.
-- **Keycloak Security Audit**: Täglich um 00:00 Uhr.
-- **Trivy Vulnerability Scan & Jira Sync**: Täglich um 02:00 Uhr.
-- **Externer Endpunkt- & SSL-Check**: Täglich um 04:00 Uhr.
-- **Pod Health Check**: Stündlich zur Minute 0.
+##  Observability
+Sicherheitsrelevante Ereignisse von **Falco** (Runtime Security) sowie Logs von **Fluent-bit** werden in **Loki** zentralisiert und in **Grafana** visualisiert. So entsteht eine lückenlose Überwachung der Infrastruktur.
+
+##  Lernerfolge
+*   **Orchestrierung**: Tiefes Verständnis für automatisierte Abläufe zwischen Scannern, Ticketing-Systemen und Messengern.
+*   **GitOps-Expertise**: Beherrschung des kompletten Lifecycles von der Code-Änderung bis zum automatisierten Deployment.
+*   **Proaktive Sicherheit**: Implementierung von Mechanismen, die Probleme lösen, bevor sie kritisch werden.
 
 ---
-
-## Lernziele & Kenntnisse
-- **GitHub Actions & CI/CD**: Aufbau automatisierter Workflows zur Durchsetzung von Security-Policies und Integration von SARIF-Reports in das GitHub-Ökosystem.
-- **GitOps-Methodik**: Vollständige Synchronisation des Cluster-Zustands über Git mittels Argo CD.
-- **Secret-Lifecycle-Management**: Sicherer Umgang mit Credentials in öffentlichen Repositories durch Verschlüsselung auf Clusterebene (Sealed Secrets).
-- **Kustomize-Architektur**: Aufbau und Verwaltung von Multi-Environment-Strategien unter Verwendung von Overlays.
-- **Incident Management Automatisierung**: Integration von Security-Scannern in Enterprise-Ticketing-Systeme (Jira) und Messaging-Plattformen (Slack).
-- **Problembehandlung in komplexen Pipelines**: Debugging von Netzwerk-Timeouts, Shell-Escaping in YAML-Manifesten und Secret-Synchronisationsprozessen.
