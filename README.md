@@ -1,5 +1,3 @@
----
-
 #  Cloud-Native DevSecOps Platform
 **Automatisierte Infrastructure, Security & Observability**
 
