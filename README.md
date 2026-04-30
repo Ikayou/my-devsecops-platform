@@ -75,6 +75,15 @@ my-devsecops-platform/
 
 ![Cleanup](bilder/cleanup.png)
 
+### 4. Security Scanning
+
+![Trivy Code Scanning](images/code-scanning.png)
+
+- Trivy wird in der CI-Pipeline ausgeführt und scannt Container-Images automatisch
+- Ergebnisse werden im GitHub Security Tab (SARIF) visualisiert
+- Kritische Schwachstellen werden weiterverarbeitet:
+  - automatische Erstellung von Jira-Tickets
+  - Benachrichtigung über Slack
 ---
 
 ## Warum dieser Aufbau?
