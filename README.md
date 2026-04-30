@@ -31,6 +31,8 @@ Dieses Projekt zeigt den Aufbau einer modernen Infrastruktur, die Sicherheit und
 *   **Verfügbarkeit**: Ein **SSL-Monitor** prüft die Gültigkeit von Zertifikaten und meldet Ablaufdaten proaktiv an Slack.
 *   **Self-Healing**: Ein Workflow erkennt abgestürzte Pods sofort. Zudem bereinigt ein automatischer **Cleanup-Workflow** täglich alte Daten, um Ressourcen zu sparen.
 
+![Cleanup](bilder/cleanup.png)
+
 ---
 
 ## Warum dieser Aufbau?
