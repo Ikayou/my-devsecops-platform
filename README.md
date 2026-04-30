@@ -11,6 +11,8 @@ Dieses Projekt zeigt den Aufbau einer modernen Infrastruktur, die Sicherheit und
 *   **Strukturierte Konfiguration**: Ich nutze **Kustomize** mit `base` und `overlays`. Das macht die Konfiguration modular und bereit für verschiedene Umgebungen (z. B. Dev und Produktion).
 *   **Sichere Secrets**: Passwörter werden mit **Sealed Secrets** verschlüsselt. So können sie sicher im öffentlichen Git-Repository gespeichert werden.
 
+![ArgoCD](bilder/argocd.png)
+
 ### 2. Security & Incident Management
 *   **Automatisierte Scans**: Ein spezialisierter **Trivy-Scanner** (basiert auf Python 3.9-slim) prüft die Applikationen regelmäßig auf Schwachstellen.
 *   **Smart Ticketing**: Findet der Scanner kritische Fehler, prüft ein Skript automatisch in **Jira**, ob das Problem bekannt ist. Falls nicht, wird ein Ticket erstellt und eine **Slack-Warnung** gesendet.
