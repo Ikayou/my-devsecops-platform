@@ -1,0 +1,14 @@
+# lokal terraform state und plugins
+.terraform/
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+*.tfvars
+*.tfvars.json
+
+# Override files (useful for local development)
+.terraformrc
+terraform.rc
