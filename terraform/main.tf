@@ -1,24 +1,27 @@
+
 terraform {
   required_providers {
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0.1"
     }
   }
 }
 
-# lokal kubeconfig verwenden, um sich mit dem Kubernetes-Cluster zu verbinden
-provider "kubernetes" {
-  config_path = "~/.kube/config"
+provider "docker" {}
+
+
+resource "docker_image" "nginx" {
+  name         = "nginx:latest"
+  keep_locally = false
 }
 
-# Namespace für die Sicherheitsinfrastruktur erstellen
-resource "kubernetes_namespace" "sec_namespace" {
-  metadata {
-    name = "security-infra-tf"
-    labels = {
-      managed-by = "terraform"
-      part-of    = "devsecops-platform"
-    }
+
+resource "docker_container" "nginx" {
+  image = docker_image.nginx.image_id
+  name  = "my-first-terraform-server"
+  ports {
+    internal = 80
+    external = 8080
   }
 }
