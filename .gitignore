@@ -1,20 +1,3 @@
-# Override files (useful for local development)
-.terraformrc
-terraform.rc
-
-# Terraform
-.terraform/
-*.tfstate
-*.tfstate.*
-crash.log
-
-# Terraform lock file
-.terraform.lock.hcl
-
-# Variables
-*.tfvars
-*.tfvars.json
-
 # OS
 .DS_Store
 Thumbs.db
